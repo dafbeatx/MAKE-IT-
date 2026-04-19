@@ -9,3 +9,5 @@ pydantic>=2.6.0
 python-dotenv>=1.0.0
 python-multipart>=0.0.9
 supabase>=2.3.4
+scipy>=1.11.0
+statsmodels>=0.14.0

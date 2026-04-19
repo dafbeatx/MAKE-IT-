@@ -12,6 +12,8 @@ from docx import Document
 from docx.shared import Pt, Cm, Inches
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 
+from engine import apply_margin, apply_typography, apply_heading, format_heading_text
+
 load_dotenv()
 
 app = FastAPI(
@@ -28,30 +30,32 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+from pydantic import BaseModel, Field
+
 # ─── Models ─────────────────────────────────────────────
 
 class Section(BaseModel):
-    id: str
-    title: str
+    id: str = Field(..., min_length=1)
+    title: str = Field(..., min_length=1, description="Section heading title")
     content: str
     quran: Optional[str] = None
     footnote: Optional[str] = None
 
 class Chapter(BaseModel):
-    id: str
-    title: str
+    id: str = Field(..., min_length=1)
+    title: str = Field(..., min_length=1, description="Chapter heading title")
     sections: List[Section]
 
 class Identity(BaseModel):
-    title: str
+    title: str = Field(..., min_length=1, description="Document main title")
     docSubtype: Optional[str] = None
-    name: str
-    nim: str
-    institution: str
-    faculty: str
+    name: str = Field(..., min_length=1)
+    nim: str = Field(..., min_length=1)
+    institution: str = Field(..., min_length=1)
+    faculty: str = Field(..., min_length=1)
     prodi: Optional[str] = None
     supervisor: str
-    year: str
+    year: str = Field(..., min_length=1)
     year_hijri: Optional[str] = None
     degree_purpose: Optional[str] = None
     logo: Optional[str] = None
@@ -126,39 +130,24 @@ def build_document(req: GenerateRequest) -> Document:
     doc = Document()
     fmt = req.format_config
 
-    # Set margins
+    # Set margins using Rule Engine
     for section in doc.sections:
-        section.top_margin = Cm(fmt.margin_top)
-        section.bottom_margin = Cm(fmt.margin_bottom)
-        section.left_margin = Cm(fmt.margin_left)
-        section.right_margin = Cm(fmt.margin_right)
+        apply_margin(section, fmt)
 
     # ── Cover Page ──
     # Only generated when user explicitly enables "Sampul Depan" in Step 2.
     # No placeholder text — only renders data the user has actually filled in.
     if req.has_cover:
 
+        from markdown_parser import parse_markdown_to_runs
         def _add_centered_line(text: str, font_size: int, bold: bool = False, italic: bool = False, spacing_after: int = 0):
-            """Helper to add a single centered line with consistent formatting, parsing *Markdown* italics."""
+            """Helper to add a single centered line with consistent formatting, parsing Markdown tokens using external parser."""
             p = doc.add_paragraph()
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             if spacing_after:
                 p.paragraph_format.space_after = Pt(spacing_after)
             
-            import re
-            parts = re.split(r'(\*[^*\n]+\*|_[^_\n]+_)', text)
-            for part in parts:
-                if not part: continue
-                is_markdown_italic = False
-                if (part.startswith('*') and part.endswith('*')) or (part.startswith('_') and part.endswith('_')):
-                    part = part[1:-1]
-                    is_markdown_italic = True
-                
-                r = p.add_run(part)
-                r.bold = bold
-                r.italic = italic or is_markdown_italic
-                r.font.name = fmt.font_name
-                r.font.size = Pt(font_size)
+            parse_markdown_to_runs(p, text, apply_typography, fmt, font_size, base_bold=bold)
 
         def _add_logo(width_inches: float):
             """Helper to safely decode and insert a base64 logo."""
@@ -253,14 +242,13 @@ def build_document(req: GenerateRequest) -> Document:
         doc.add_page_break()
 
     # ── Abstract ──
+    from markdown_parser import parse_markdown_to_runs
+
     if fmt.has_abstract and req.abstract_paragraphs:
         doc.add_page_break()
         abs_h = doc.add_paragraph()
-        abs_h.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        abs_run = abs_h.add_run("ABSTRAK")
-        abs_run.bold = True
-        abs_run.font.name = fmt.font_name
-        abs_run.font.size = Pt(fmt.font_size_heading)
+        apply_heading(abs_h, 1, fmt)
+        parse_markdown_to_runs(abs_h, "ABSTRAK", apply_typography, fmt, fmt.h1_size, base_bold=fmt.h1_bold)
         doc.add_paragraph("")
         
         for para_text in req.abstract_paragraphs:
@@ -269,47 +257,34 @@ def build_document(req: GenerateRequest) -> Document:
                 p.paragraph_format.first_line_indent = Cm(fmt.first_line_indent)
                 p.paragraph_format.line_spacing = fmt.line_spacing
                 p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                run = p.add_run(para_text.strip())
-                run.font.name = fmt.font_name
-                run.font.size = Pt(fmt.font_size_body)
+                parse_markdown_to_runs(p, para_text.strip(), apply_typography, fmt, fmt.font_size_body)
 
         doc.add_page_break()
 
     # ── Chapters ──
     for chapter in req.chapters:
-        # Chapter heading — respects h1_bold, h1_uppercase, h1_center
         chapter_title_parts = chapter.title.split(":", 1)
         bab_number = chapter_title_parts[0].strip()
         bab_name = chapter_title_parts[1].strip() if len(chapter_title_parts) > 1 else ""
 
-        if fmt.h1_uppercase:
-            bab_number = bab_number.upper()
-            bab_name = bab_name.upper()
+        bab_number = format_heading_text(bab_number, 1, fmt)
+        bab_name = format_heading_text(bab_name, 1, fmt)
 
         h_para = doc.add_paragraph()
-        h_para.alignment = WD_ALIGN_PARAGRAPH.CENTER if fmt.h1_center else WD_ALIGN_PARAGRAPH.LEFT
-        run = h_para.add_run(bab_number)
-        run.bold = fmt.h1_bold
-        run.font.name = fmt.font_name
-        run.font.size = Pt(fmt.h1_size)
+        apply_heading(h_para, 1, fmt)
+        parse_markdown_to_runs(h_para, bab_number, apply_typography, fmt, fmt.h1_size, base_bold=fmt.h1_bold)
 
         if bab_name:
             h_para2 = doc.add_paragraph()
-            h_para2.alignment = WD_ALIGN_PARAGRAPH.CENTER if fmt.h1_center else WD_ALIGN_PARAGRAPH.LEFT
-            run2 = h_para2.add_run(bab_name)
-            run2.bold = fmt.h1_bold
-            run2.font.name = fmt.font_name
-            run2.font.size = Pt(fmt.h1_size)
+            apply_heading(h_para2, 1, fmt)
+            parse_markdown_to_runs(h_para2, bab_name, apply_typography, fmt, fmt.h1_size, base_bold=fmt.h1_bold)
 
         doc.add_paragraph("")
 
         for section in chapter.sections:
-            # Section heading — uses h2_size, h2_bold
             s_para = doc.add_paragraph()
-            s_run = s_para.add_run(section.title)
-            s_run.bold = fmt.h2_bold
-            s_run.font.name = fmt.font_name
-            s_run.font.size = Pt(fmt.h2_size)
+            apply_heading(s_para, 2, fmt)
+            parse_markdown_to_runs(s_para, section.title, apply_typography, fmt, fmt.h2_size, base_bold=fmt.h2_bold)
 
             # Content paragraphs
             if section.content.strip():
@@ -319,9 +294,7 @@ def build_document(req: GenerateRequest) -> Document:
                         p.paragraph_format.first_line_indent = Cm(fmt.first_line_indent)
                         p.paragraph_format.line_spacing = fmt.line_spacing
                         p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
-                        run = p.add_run(para_text.strip())
-                        run.font.name = fmt.font_name
-                        run.font.size = Pt(fmt.font_size_body)
+                        parse_markdown_to_runs(p, para_text.strip(), apply_typography, fmt, fmt.font_size_body)
 
             # Insert Quran text if configured and present
             if fmt.has_quran and section.quran and section.quran.strip():
@@ -441,36 +414,61 @@ async def process_spss(file: UploadFile = File(...)):
 
         # Build Word doc with descriptive stats table
         doc = Document()
-        doc.add_heading("Tabel Statistik Deskriptif", level=2)
+        
+        # Helper to apply clean styles
+        def format_table(table):
+            table.style = "Light Grid Accent 1"
+            for row in table.rows:
+                for cell in row.cells:
+                    for para in cell.paragraphs:
+                        for run in para.runs:
+                            run.font.name = "Times New Roman"
+                            run.font.size = Pt(10)
 
+        # 1. Descriptive Statistics
+        doc.add_heading("Tabel Statistik Deskriptif", level=2)
         stats = df.describe().round(3)
         table = doc.add_table(rows=1, cols=len(stats.columns) + 1)
-        table.style = "Light Grid Accent 1"
-
-        # Header row
+        
         hdr = table.rows[0].cells
         hdr[0].text = "Statistik"
         for i, col in enumerate(stats.columns):
             hdr[i + 1].text = str(col)
 
-        # Data rows
         for idx, row in stats.iterrows():
             cells = table.add_row().cells
             cells[0].text = str(idx)
             for i, val in enumerate(row):
                 cells[i + 1].text = str(val)
+        format_table(table)
+        doc.add_paragraph()
 
-        # Apply font
-        for row in table.rows:
-            for cell in row.cells:
-                for para in cell.paragraphs:
-                    for run in para.runs:
-                        run.font.name = "Times New Roman"
-                        run.font.size = Pt(10)
+        # 2. Normality Test (Shapiro-Wilk)
+        from scipy import stats as scipy_stats
+        import numpy as np
+
+        doc.add_heading("Uji Normalitas (Shapiro-Wilk)", level=2)
+        norm_table = doc.add_table(rows=1, cols=3)
+        n_hdr = norm_table.rows[0].cells
+        n_hdr[0].text = "Variabel"
+        n_hdr[1].text = "Statistic (W)"
+        n_hdr[2].text = "p-value"
+
+        numeric_cols = df.select_dtypes(include=[np.number]).columns
+        for col in numeric_cols:
+            clean_data = df[col].dropna()
+            if len(clean_data) >= 3:
+                stat, p_val = scipy_stats.shapiro(clean_data)
+                cells = norm_table.add_row().cells
+                cells[0].text = str(col)
+                cells[1].text = f"{stat:.4f}"
+                cells[2].text = f"{p_val:.4f} {'(Normal)' if p_val > 0.05 else '(Tidak Normal)'}"
+        format_table(norm_table)
 
         buffer = io.BytesIO()
         doc.save(buffer)
         buffer.seek(0)
+
 
         os.unlink(tmp_path)
 

@@ -1,5 +1,7 @@
 "use client";
 
+import { create } from "zustand";
+import { persist } from "zustand/middleware";
 import { WizardFormData, DEFAULT_CUSTOM_FORMAT } from "@/lib/format-types";
 
 const STORAGE_KEY = "makeit_current_project";
@@ -48,20 +50,48 @@ export interface ProjectStore {
   lastUpdated: string;
 }
 
+export interface AppStore extends ProjectStore {
+  setWizard: (data: Partial<WizardFormData>) => void;
+  setChapters: (chapters: EditorChapter[]) => void;
+  setProject: (data: ProjectStore) => void;
+  clearProject: () => void;
+}
+
+const defaultStoreData: ProjectStore = {
+  wizard: DefaultProject,
+  chapters: [],
+  abstract_paragraphs: undefined,
+  lastUpdated: new Date().toISOString(),
+};
+
+export const useStore = create<AppStore>()(
+  persist(
+    (set) => ({
+      ...defaultStoreData,
+      setWizard: (data) => set((state) => ({ wizard: { ...state.wizard, ...data } })),
+      setChapters: (chapters) => set({ chapters }),
+      setProject: (data) => set({ ...data }),
+      clearProject: () => set({ ...defaultStoreData }),
+    }),
+    {
+      name: STORAGE_KEY,
+    }
+  )
+);
+
+// Fallback legacy functions pointing to Zustand for backward compatibility without breaking components instantly
 export function saveProject(data: ProjectStore) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  useStore.getState().setProject(data);
 }
 
 export function getProject(): ProjectStore | null {
-  if (typeof window === "undefined") return null;
-  const data = localStorage.getItem(STORAGE_KEY);
-  return data ? JSON.parse(data) : null;
+  const state = useStore.getState();
+  if (!state.chapters.length) return null;
+  return state;
 }
 
 export function clearProject() {
-  if (typeof window === "undefined") return;
-  localStorage.removeItem(STORAGE_KEY);
+  useStore.getState().clearProject();
 }
 
 export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectStore {

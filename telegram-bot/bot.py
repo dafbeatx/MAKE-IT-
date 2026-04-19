@@ -32,49 +32,88 @@ class DocWizard(StatesGroup):
     writing_bab = State()  # user sends content per chapter
 
 
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, CallbackQuery
+
 # ─── /start ─────────────────────────────────────────────
 
 @dp.message(Command("start"))
 async def cmd_start(message: types.Message, state: FSMContext):
     await state.clear()
+    
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Skripsi", callback_data="doc_Skripsi")],
+        [InlineKeyboardButton(text="Tesis", callback_data="doc_Tesis")],
+        [InlineKeyboardButton(text="Makalah", callback_data="doc_Makalah")],
+        [InlineKeyboardButton(text="Laporan Praktikum", callback_data="doc_Laporan Praktikum")]
+    ])
+    
     await message.answer(
         "👋 Selamat datang di *MAKE!T Bot*\\!\n\n"
         "Saya membantu Anda menyusun dokumen akademik \\(Skripsi, Makalah, Laporan\\) "
         "dengan format rapi\\. Anda yang menulis, saya yang merapikan\\.\n\n"
-        "Pilih tipe dokumen:\n"
-        "1\\. Skripsi\n"
-        "2\\. Tesis\n"
-        "3\\. Makalah\n"
-        "4\\. Laporan KP/PKL\n"
-        "5\\. Laporan Praktikum\n"
-        "6\\. Surat Resmi\n\n"
-        "Ketik angka pilihannya \\(misal: `1`\\)",
+        "Silakan pilih tipe dokumen Anda di bawah ini:",
         parse_mode="MarkdownV2",
+        reply_markup=keyboard
     )
-    await state.set_state(DocWizard.doc_type)
 
-
-@dp.message(DocWizard.doc_type)
-async def process_doc_type(message: types.Message, state: FSMContext):
-    type_map = {
-        "1": "Skripsi", "2": "Tesis", "3": "Makalah",
-        "4": "Laporan KP/PKL", "5": "Laporan Praktikum", "6": "Surat Resmi",
-    }
-    doc_type = type_map.get(message.text or "", message.text or "Skripsi")
+@dp.callback_query(lambda c: c.data and c.data.startswith('doc_'))
+async def process_doc_type_callback(callback_query: CallbackQuery, state: FSMContext):
+    doc_type = callback_query.data.split('_')[1]
     await state.update_data(doc_type=doc_type)
-    await message.answer(
+    await callback_query.message.answer(
         f"✅ Tipe: *{doc_type}*\n\n"
         "Sekarang kirimkan *judul dokumen* Anda:",
         parse_mode="Markdown",
     )
     await state.set_state(DocWizard.title)
+    await callback_query.answer()
 
+@dp.message(Command("template"))
+async def cmd_template(message: types.Message):
+    await message.answer(
+        "📝 *Kirimkan file template .docx* Anda yang berisi {{ placeholder }} Jinja2.\n"
+        "Sertakan caption berupa JSON data (misal: `{\"nama\": \"Senku\"}`) untuk mengisi template tersebut.",
+        parse_mode="Markdown"
+    )
 
-@dp.message(DocWizard.title)
-async def process_title(message: types.Message, state: FSMContext):
-    await state.update_data(title=message.text or "")
-    await message.answer("👤 Siapa *nama lengkap* Anda?", parse_mode="Markdown")
-    await state.set_state(DocWizard.name)
+@dp.message(F.document)
+async def handle_document_upload(message: types.Message):
+    """Handle uploaded .docx files for formatting or template rendering."""
+    doc = message.document
+    if not doc or not doc.file_name or not doc.file_name.endswith(".docx"):
+        await message.answer("⚠️ Tolong kirim file berformat .docx saja.")
+        return
+
+    caption = message.caption or ""
+    is_template = "{" in caption and "}" in caption
+
+    await message.answer("⏳ Sedang memproses dokumen...")
+
+    try:
+        file_info = await bot.get_file(doc.file_id)  # type: ignore
+        file_bytes = await bot.download_file(file_info.file_path)  # type: ignore
+
+        form_data = aiohttp.FormData()
+        form_data.add_field("file" if not is_template else "template", file_bytes, filename=doc.file_name, content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+        
+        endpoint = "/api/rapikan"
+        if is_template:
+            endpoint = "/api/template/render"
+            form_data.add_field("data", caption)
+        else:
+            form_data.add_field("format_preset", "standar-a")
+
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{API_BASE}{endpoint}", data=form_data) as resp:
+                if resp.status == 200:
+                    result_bytes = await resp.read()
+                    prefix = "RENDER_" if is_template else "RAPIKAN_"
+                    result_file = BufferedInputFile(result_bytes, filename=f"{prefix}{doc.file_name}")
+                    await message.answer_document(result_file, caption="✅ Dokumen berhasil diproses!")
+                else:
+                    await message.answer(f"❌ Gagal: {await resp.text()}")
+    except Exception as e:
+        await message.answer(f"❌ Error: {str(e)}")
 
 
 @dp.message(DocWizard.name)
@@ -222,37 +261,11 @@ async def cmd_rapikan(message: types.Message):
     )
 
 
-@dp.message(F.document)
-async def handle_document_upload(message: types.Message):
-    """Handle uploaded .docx files for formatting."""
-    doc = message.document
-    if not doc or not doc.file_name or not doc.file_name.endswith(".docx"):
-        await message.answer("⚠️ Tolong kirim file berformat .docx saja.")
-        return
-
-    await message.answer("⏳ Sedang merapikan dokumen...")
-
-    try:
-        file_info = await bot.get_file(doc.file_id)  # type: ignore
-        file_bytes = await bot.download_file(file_info.file_path)  # type: ignore
-
-        # Call API
-        form_data = aiohttp.FormData()
-        form_data.add_field("file", file_bytes, filename=doc.file_name, content_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-        form_data.add_field("format_preset", "standar-a")
-
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f"{API_BASE}/api/rapikan", data=form_data) as resp:
-                if resp.status == 200:
-                    result_bytes = await resp.read()
-                    result_file = BufferedInputFile(result_bytes, filename=f"RAPIKAN_{doc.file_name}")
-                    await message.answer_document(result_file, caption="✅ Dokumen berhasil dirapikan!")
-                else:
-                    await message.answer(f"❌ Gagal: {await resp.text()}")
-    except Exception as e:
-        await message.answer(f"❌ Error: {str(e)}")
-
-
+@dp.message(DocWizard.title)
+async def process_title(message: types.Message, state: FSMContext):
+    await state.update_data(title=message.text or "")
+    await message.answer("👤 Siapa *nama lengkap* Anda?", parse_mode="Markdown")
+    await state.set_state(DocWizard.name)
 # ─── Main ───────────────────────────────────────────────
 
 async def main():

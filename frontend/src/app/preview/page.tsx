@@ -184,6 +184,10 @@ export default function PreviewPage() {
 
       {/* Preview area */}
       <main className="flex-1 overflow-auto p-4 sm:p-8">
+        <div className="mx-auto max-w-4xl mb-6 rounded-md bg-amber-500/15 border border-amber-500/30 p-3 text-center text-sm text-amber-700 dark:text-amber-400">
+          <strong>Catatan Pratinjau:</strong> Tampilan ini adalah aproksimasi visual interaktif (A4). Penggambaran margin dan rendering tipografi antar peramban (browser) mungkin sedikit berbeda dengan hasil unduhan asli Microsoft Word.
+        </div>
+
         <div className="mx-auto flex flex-col items-center gap-8 pb-10">
           
           {/* ═══════════════════════════════════════════════════════

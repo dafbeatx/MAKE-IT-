@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
@@ -8,6 +8,7 @@ import Link from "next/link";
 import { saveProject, createInitialProjectFromWizard } from "@/lib/store";
 import { DEFAULT_CUSTOM_FORMAT } from "@/lib/format-types";
 import type { WizardFormData } from "@/lib/format-types";
+import { wizardValidation } from "@/lib/validations";
 
 // Re-export types so existing imports from this file still work
 export type { CustomFormatConfig, WizardFormData } from "@/lib/format-types";
@@ -53,44 +54,75 @@ const DEFAULT_FORM: WizardFormData = {
   customFormat: { ...DEFAULT_CUSTOM_FORMAT },
 };
 
+import { useStore, createInitialProjectFromWizard } from "@/lib/store";
+
 export default function WizardPage() {
   const [step, setStep] = useState(1);
-  const [form, setForm] = useState<WizardFormData>(DEFAULT_FORM);
+  const [mounted, setMounted] = useState(false);
+
+  const form = useStore((state) => state.wizard);
+  const setWizard = useStore((state) => state.setWizard);
+  const setProject = useStore((state) => state.setProject);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const pct = (step / STEPS.length) * 100;
 
-  const next = useCallback(() => setStep((s) => Math.min(s + 1, STEPS.length)), []);
+  const next = useCallback(() => {
+    if (step === 2) {
+      const result = wizardValidation.validateStep2(form.chapters);
+      if (!result.success) {
+        alert("Validasi Gagal: " + result.error.errors[0].message);
+        return;
+      }
+    } else if (step === 3 && form.hasCover) {
+      const result = wizardValidation.validateStep3(form.identity);
+      if (!result.success) {
+        const errors = result.error.errors.map(e => e.message).join("\n- ");
+        alert("Periksa kembali form Identitas:\n- " + errors);
+        return;
+      }
+    }
+    setStep((s) => Math.min(s + 1, STEPS.length));
+  }, [step, form]);
+
   const prev = useCallback(() => setStep((s) => Math.max(s - 1, 1)), []);
 
   const updateForm = useCallback(
     <K extends keyof WizardFormData>(key: K, value: WizardFormData[K]) => {
-      setForm((prev) => {
-        const newState = { ...prev, [key]: value };
-        
-        // Wipe state clean if user switches to "skripsi"
-        if (key === "docType" && value === "skripsi" && prev.docType !== "skripsi") {
-          newState.hasCover = false;
-          newState.chapters = [];
-          newState.identity = {
-            title: "", docSubtype: "", name: "", nim: "", institution: "", faculty: "", prodi: "", supervisor: "", year: "", year_hijri: "", degree_purpose: "Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan", logo: ""
-          };
-          newState.format = "custom"; // Force strictly manual format
-        } else if (key === "docType" && value !== "skripsi" && prev.docType === "skripsi") {
-          // Restore basic layout for other docs
-          newState.chapters = DEFAULT_FORM.chapters;
-          newState.format = "standar-a";
-        }
+      const prev = useStore.getState().wizard;
+      const newState: Partial<WizardFormData> = { [key]: value };
+      
+      // Wipe state clean if user switches to "skripsi"
+      if (key === "docType" && value === "skripsi" && prev.docType !== "skripsi") {
+        newState.hasCover = false;
+        newState.chapters = [];
+        newState.identity = {
+          title: "", docSubtype: "", name: "", nim: "", institution: "", faculty: "", prodi: "", supervisor: "", year: "", year_hijri: "", degree_purpose: "Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan", logo: ""
+        };
+        newState.format = "custom"; // Force strictly manual format
+      } else if (key === "docType" && value !== "skripsi" && prev.docType === "skripsi") {
+        // Restore basic layout for other docs
+        newState.chapters = DEFAULT_FORM.chapters;
+        newState.format = "standar-a";
+      }
 
-        return newState;
-      });
+      setWizard(newState as any);
     },
-    []
+    [setWizard]
   );
 
   const handleFinish = () => {
+    // Save to the store so the editor component can pick it up
     const project = createInitialProjectFromWizard(form);
-    saveProject(project);
+    setProject(project);
   };
+
+  if (!mounted) {
+    return <div className="flex min-h-dvh flex-col bg-muted/30"></div>;
+  }
 
   return (
     <div className="flex min-h-dvh flex-col bg-muted/30">
