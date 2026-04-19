@@ -48,15 +48,18 @@ export interface WizardChapter {
 
 export interface WizardFormData {
   docType: string;
+  hasCover?: boolean;
   chapters: WizardChapter[];
   identity: {
     title: string;
+    docSubtype?: string;
     name: string;
     nim: string;
     institution: string;
     faculty: string;
     supervisor: string;
     year: string;
+    logo?: string;
   };
   format: string;
   customFormat: CustomFormatConfig;

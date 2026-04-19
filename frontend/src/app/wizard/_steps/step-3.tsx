@@ -5,22 +5,43 @@ import { Label } from "@/components/ui/label";
 
 interface IdentityData {
   title: string;
+  docSubtype?: string;
   name: string;
   nim: string;
   institution: string;
   faculty: string;
   supervisor: string;
   year: string;
+  logo?: string;
 }
 
 interface Props {
   value: IdentityData;
   onChange: (v: IdentityData) => void;
+  hasCover?: boolean;
 }
 
-export default function Step3Identitas({ value, onChange }: Props) {
+export default function Step3Identitas({ value, onChange, hasCover }: Props) {
   const update = (key: keyof IdentityData, val: string) => {
     onChange({ ...value, [key]: val });
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert("Ukuran logo maksimal 2 MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      if (ev.target?.result) {
+        update("logo", ev.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -32,7 +53,45 @@ export default function Step3Identitas({ value, onChange }: Props) {
         </p>
       </div>
 
+      {hasCover && (
+        <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-4 sm:col-span-2">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+            <div className="flex-1 space-y-2">
+              <Label htmlFor="w-logo" className="text-sm font-semibold text-emerald-700">Logo Institusi (Opsional)</Label>
+              <Input
+                id="w-logo"
+                type="file"
+                accept="image/png, image/jpeg, image/svg+xml"
+                onChange={handleLogoUpload}
+                className="h-10 cursor-pointer bg-white dark:bg-zinc-900"
+              />
+              <p className="text-[11px] text-muted-foreground">Rekomendasi file PNG transparan. Maks 2MB.</p>
+            </div>
+            {value.logo && (
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-white p-1 shadow-sm sm:h-20 sm:w-20">
+                <img src={value.logo} alt="Logo" className="max-h-full max-w-full object-contain" />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {hasCover && (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="w-docSubtype" className="text-sm font-semibold">
+              Jenis Tulisan / Dokumen
+            </Label>
+            <Input
+              id="w-docSubtype"
+              value={value.docSubtype || ""}
+              onChange={(e) => update("docSubtype", e.target.value)}
+              placeholder="Contoh: SKRIPSI / SEMINAR HASIL / MAKALAH (kosongkan jika tidak ada)"
+              className="h-12 text-base sm:h-11 sm:text-sm uppercase"
+            />
+          </div>
+        )}
+
         <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="w-title" className="text-sm font-semibold">
             Judul Dokumen

@@ -150,6 +150,8 @@ export default function EditorPage() {
           };
 
       const blob = await generateDocument({
+        docType: project.wizard.docType,
+        has_cover: project.wizard.hasCover,
         identity: project.wizard.identity,
         chapters: project.chapters,
         format_config: formatConfig,

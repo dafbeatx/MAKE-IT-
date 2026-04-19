@@ -1,22 +1,19 @@
 "use client";
 
-import { Pencil, Trash2, Plus, Check, X, ArrowUp, ArrowDown } from "lucide-react";
+import { Pencil, Trash2, Plus, Check, X, ArrowUp, ArrowDown, FileBadge } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { WizardChapter } from "@/lib/format-types";
 
-// Removed numbering_system from here because it's managed via Step 4, 
-// but wait, the prompt explicitly said to add Dropdown penomoran subbab here.
-// However, the state for numbering_system is in CustomFormatConfig.
-// To keep things simple and decoupled, I will just let the user arrange the chapters here.
-
 interface Props {
   chapters: WizardChapter[];
   onChange: (v: WizardChapter[]) => void;
+  hasCover: boolean;
+  onToggleCover: (v: boolean) => void;
 }
 
-export default function Step2Sistematika({ chapters, onChange }: Props) {
+export default function Step2Sistematika({ chapters, onChange, hasCover, onToggleCover }: Props) {
   const [editingChapId, setEditingChapId] = useState<string | null>(null);
   const [editingSecId, setEditingSecId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
@@ -146,7 +143,33 @@ export default function Step2Sistematika({ chapters, onChange }: Props) {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-3 sm:gap-4">
+        {/* Cover Toggle Button */}
+        {!hasCover ? (
+          <Button
+            variant="outline"
+            className="h-12 w-full justify-start border-dashed border-2 hover:bg-muted font-medium text-muted-foreground hover:text-foreground"
+            onClick={() => onToggleCover(true)}
+          >
+            <Plus className="mr-2 h-4 w-4" /> Tambah Sampul Depan / Cover
+          </Button>
+        ) : (
+          <div className="flex items-center justify-between rounded-xl border-2 border-emerald-500/50 bg-emerald-500/5 p-3 shadow-sm sm:p-4">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+                <FileBadge className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col">
+                <span className="font-bold text-foreground">Sampul Depan (Cover)</span>
+                <span className="text-[11px] font-medium text-emerald-600/80">Otomatis di halaman pertama. Pengaturan Logo/Judul di langkah identitas.</span>
+              </div>
+            </div>
+            <Button size="icon" variant="ghost" className="h-9 w-9 text-muted-foreground hover:text-red-500 hover:bg-red-500/10" onClick={() => onToggleCover(false)}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
         {chapters.length === 0 && (
           <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border py-12 px-4 text-center">
             <p className="text-sm font-medium text-muted-foreground">

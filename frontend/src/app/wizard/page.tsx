@@ -27,6 +27,7 @@ const STEPS = [
 
 const DEFAULT_FORM: WizardFormData = {
   docType: "",
+  hasCover: false,
   chapters: [
     { id: "1", name: "Bab 1: Pendahuluan" },
     { id: "2", name: "Bab 2: Tinjauan Pustaka" },
@@ -36,12 +37,14 @@ const DEFAULT_FORM: WizardFormData = {
   ],
   identity: {
     title: "",
+    docSubtype: "",
     name: "",
     nim: "",
     institution: "",
     faculty: "",
     supervisor: "",
     year: new Date().getFullYear().toString(),
+    logo: "",
   },
   format: "standar-a",
   customFormat: { ...DEFAULT_CUSTOM_FORMAT },
@@ -63,9 +66,10 @@ export default function WizardPage() {
         
         // Wipe state clean if user switches to "skripsi"
         if (key === "docType" && value === "skripsi" && prev.docType !== "skripsi") {
+          newState.hasCover = false;
           newState.chapters = [];
           newState.identity = {
-            title: "", name: "", nim: "", institution: "", faculty: "", supervisor: "", year: ""
+            title: "", docSubtype: "", name: "", nim: "", institution: "", faculty: "", supervisor: "", year: "", logo: ""
           };
           newState.format = "custom"; // Force strictly manual format
         } else if (key === "docType" && value !== "skripsi" && prev.docType === "skripsi") {
@@ -151,10 +155,13 @@ export default function WizardPage() {
             <Step2Sistematika
               chapters={form.chapters}
               onChange={(v) => updateForm("chapters", v)}
+              hasCover={form.hasCover || false}
+              onToggleCover={(v) => updateForm("hasCover", v)}
             />
           )}
           {step === 3 && (
             <Step3Identitas
+              hasCover={form.hasCover || false}
               value={form.identity}
               onChange={(v) => updateForm("identity", v)}
             />

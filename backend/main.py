@@ -1,5 +1,6 @@
 import os
 import io
+import base64
 import tempfile
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -43,12 +44,14 @@ class Chapter(BaseModel):
 
 class Identity(BaseModel):
     title: str
+    docSubtype: Optional[str] = None
     name: str
     nim: str
     institution: str
     faculty: str
     supervisor: str
     year: str
+    logo: Optional[str] = None
 
 class FormatConfig(BaseModel):
     font_name: str = "Times New Roman"
@@ -89,6 +92,8 @@ class FormatConfig(BaseModel):
         return self.font_size_h3 or self.font_size_body
 
 class GenerateRequest(BaseModel):
+    docType: Optional[str] = None
+    has_cover: Optional[bool] = False
     identity: Identity
     chapters: List[Chapter]
     format_config: FormatConfig = FormatConfig()
@@ -125,56 +130,74 @@ def build_document(req: GenerateRequest) -> Document:
         section.right_margin = Cm(fmt.margin_right)
 
     # ── Cover Page ──
-    for _ in range(6):
+    if req.has_cover:
+        for _ in range(4):
+            doc.add_paragraph("")
+
+        if req.identity.logo:
+            try:
+                # Expecting 'data:image/png;base64,...'
+                header, encoded = req.identity.logo.split(",", 1)
+                image_data = base64.b64decode(encoded)
+                logo_io = io.BytesIO(image_data)
+                
+                logo_para = doc.add_paragraph()
+                logo_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+                logo_run = logo_para.add_run()
+                logo_run.add_picture(logo_io, width=Inches(1.5))
+            except Exception as e:
+                print("Failed to decode logo:", e)
+
+        title_para = doc.add_paragraph()
+        title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = title_para.add_run((req.identity.title or "").upper())
+        run.bold = True
+        run.font.name = fmt.font_name
+        run.font.size = Pt(fmt.font_size_heading)
+
         doc.add_paragraph("")
+        
+        type_para = doc.add_paragraph()
+        type_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = type_para.add_run((req.identity.docSubtype or "SKRIPSI").upper())
+        run.font.name = fmt.font_name
+        run.font.size = Pt(fmt.font_size_body)
 
-    title_para = doc.add_paragraph()
-    title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = title_para.add_run(req.identity.title.upper())
-    run.bold = True
-    run.font.name = fmt.font_name
-    run.font.size = Pt(fmt.font_size_heading)
+        for _ in range(4):
+            doc.add_paragraph("")
 
-    doc.add_paragraph("")
-    
-    type_para = doc.add_paragraph()
-    type_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = type_para.add_run("SKRIPSI")
-    run.font.name = fmt.font_name
-    run.font.size = Pt(fmt.font_size_body)
+        author_para = doc.add_paragraph()
+        author_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = author_para.add_run("Disusun Oleh:")
+        run.font.name = fmt.font_name
+        run.font.size = Pt(fmt.font_size_body)
 
-    for _ in range(4):
-        doc.add_paragraph("")
+        name_para = doc.add_paragraph()
+        name_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = name_para.add_run((req.identity.name or "").upper())
+        run.bold = True
+        run.font.name = fmt.font_name
+        run.font.size = Pt(fmt.font_size_body)
 
-    author_para = doc.add_paragraph()
-    author_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = author_para.add_run("Disusun oleh:")
-    run.font.name = fmt.font_name
-    run.font.size = Pt(fmt.font_size_body)
+        nim_para = doc.add_paragraph()
+        nim_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = nim_para.add_run(f"NIM: {req.identity.nim or '-'}")
+        run.bold = True
+        run.font.name = fmt.font_name
+        run.font.size = Pt(fmt.font_size_body)
 
-    name_para = doc.add_paragraph()
-    name_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = name_para.add_run(req.identity.name.upper())
-    run.bold = True
-    run.font.name = fmt.font_name
-    run.font.size = Pt(fmt.font_size_body)
+        for _ in range(4):
+            doc.add_paragraph("")
 
-    nim_para = doc.add_paragraph()
-    nim_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = nim_para.add_run(f"NIM: {req.identity.nim}")
-    run.font.name = fmt.font_name
-    run.font.size = Pt(fmt.font_size_body)
-
-    for _ in range(4):
-        doc.add_paragraph("")
-
-    for text in [req.identity.faculty.upper(), req.identity.institution.upper(), req.identity.year]:
-        p = doc.add_paragraph()
-        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r = p.add_run(text)
-        r.bold = True
-        r.font.name = fmt.font_name
-        r.font.size = Pt(fmt.font_size_body)
+        for text in [req.identity.institution, req.identity.faculty, req.identity.year]:
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            r = p.add_run((text or "").upper())
+            r.bold = True
+            r.font.name = fmt.font_name
+            r.font.size = Pt(fmt.font_size_body)
+            
+        doc.add_page_break()
 
     # ── Abstract ──
     if fmt.has_abstract and req.abstract_paragraphs:

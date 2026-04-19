@@ -104,7 +104,8 @@ export default function PreviewPage() {
   const h2FontSize = `${fmt.font_size_h2}pt`;
 
   // ── Count pages for numbering ──
-  let pageCounter = 1; // Cover is page 1
+  let pageCounter = 0; 
+  if (project.wizard.hasCover) pageCounter++;
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-200 dark:bg-gray-900">
@@ -160,42 +161,42 @@ export default function PreviewPage() {
         <div className="mx-auto flex flex-col items-center gap-8 pb-10">
           
           {/* Page 1: Cover */}
-          <div
-            className="doc-preview origin-top overflow-hidden bg-white text-black shadow-xl"
-            style={pageStyle()}
-          >
-            <div className="flex h-full flex-col items-center text-center">
-              <p className="mb-12 font-bold leading-tight uppercase" style={{ fontSize: h1FontSize }}>
-                {project.wizard.identity.title || "JUDUL DOKUMEN BELUM DIISI"}
-              </p>
+          {project.wizard.hasCover && (
+            <div
+              className="doc-preview origin-top overflow-hidden bg-white text-black shadow-xl"
+              style={pageStyle()}
+            >
+              <div className="flex h-full flex-col items-center justify-between py-12 text-center" style={{ fontFamily: fmt.font_name }}>
+                <div>
+                  {project.wizard.identity.logo && (
+                    <img src={project.wizard.identity.logo} alt="Logo" className="mx-auto mb-10 h-32 w-32 object-contain" />
+                  )}
+                  <p className="mb-8 font-bold uppercase leading-tight" style={{ fontSize: h1FontSize }}>
+                    {project.wizard.identity.title || "JUDUL DOKUMEN BELUM DIISI"}
+                  </p>
+                  <p className="font-bold uppercase tracking-wider" style={{ fontSize: h2FontSize }}>
+                    {project.wizard.identity.docSubtype || "SKRIPSI"}
+                  </p>
+                </div>
 
-              <p className="mb-24 uppercase" style={{ fontSize: bodyFontSize }}>
-                {project.wizard.docType || "SKRIPSI"}
-              </p>
+                <div className="flex flex-col items-center pb-8 border-b-2 border-transparent">
+                  <p className="mb-2 uppercase" style={{ fontSize: bodyFontSize }}>Disusun Oleh:</p>
+                  <p className="mb-1 font-bold uppercase" style={{ fontSize: h2FontSize }}>
+                    {project.wizard.identity.name || "NAMA MAHASISWA"}
+                  </p>
+                  <p className="font-bold uppercase" style={{ fontSize: h2FontSize }}>
+                    NIM: {project.wizard.identity.nim || "-"}
+                  </p>
+                </div>
 
-              <div className="mx-auto mb-24 flex h-24 w-24 items-center justify-center rounded-lg border-2 border-gray-300 text-[10pt] text-gray-400">
-                Logo Institusi
+                <div className="flex flex-col items-center mt-auto font-bold uppercase leading-relaxed" style={{ fontSize: h2FontSize }}>
+                  <p>{project.wizard.identity.institution || "INSTITUSI"}</p>
+                  <p>{project.wizard.identity.faculty || "FAKULTAS"}</p>
+                  <p>{project.wizard.identity.year || new Date().getFullYear().toString()}</p>
+                </div>
               </div>
-
-              <p className="mb-2" style={{ fontSize: bodyFontSize }}>Disusun oleh:</p>
-              <p className="mb-1 font-bold uppercase" style={{ fontSize: bodyFontSize }}>
-                {project.wizard.identity.name || "NAMA MAHASISWA"}
-              </p>
-              <p className="mb-14" style={{ fontSize: bodyFontSize }}>
-                NIM: {project.wizard.identity.nim || "-"}
-              </p>
-
-              <p className="mb-1 font-bold uppercase" style={{ fontSize: bodyFontSize }}>
-                {project.wizard.identity.faculty || "FAKULTAS"}
-              </p>
-              <p className="mb-1 font-bold uppercase" style={{ fontSize: bodyFontSize }}>
-                {project.wizard.identity.institution || "UNIVERSITAS"}
-              </p>
-              <p className="font-bold" style={{ fontSize: bodyFontSize }}>
-                {project.wizard.identity.year || "2024"}
-              </p>
             </div>
-          </div>
+          )}
 
           {/* Page 2: Abstrak (if enabled) */}
           {fmt.has_abstract && project.abstract_paragraphs && (

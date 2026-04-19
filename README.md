@@ -11,6 +11,7 @@ MAKE!T adalah platform Document Generator yang **100% GRATIS dan tanpa AI genera
 - ✅ **Progressive Web App (PWA)**: Dapat di-install di Android/iOS layaknya aplikasi asli.
 - ✅ **Telegram Bot Integration**: Full flow melalui chat bot interaktif.
 - ✅ **Format Global Kustomisasi**: Konfigurasi lengkap tipografi (H1/H2/H3/body), gaya heading (bold/uppercase/center), margin, nomor halaman (Roman + Arab), sistematika penomoran Indonesia (Bab I → A. → a. → 1). → a).), dan indentasi — dengan real-time preview.
+- ✅ **Cover 100% Manual**: Anda bisa dengan fleksibel menambahkan cover dari wizard, mengatur Layout centered dan mengunggah *Logo Institusi* (resolusi tinggi didukung).
 
 ## 🛠️ Tech Stack
 - **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS, shadcn/ui.

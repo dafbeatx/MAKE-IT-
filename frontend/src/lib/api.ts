@@ -16,12 +16,14 @@ export interface Chapter {
 
 export interface Identity {
   title: string;
+  docSubtype?: string;
   name: string;
   nim: string;
   institution: string;
   faculty: string;
   supervisor: string;
   year: string;
+  logo?: string;
 }
 
 export interface FormatConfig {
@@ -52,6 +54,8 @@ export interface FormatConfig {
 }
 
 export interface GenerateRequest {
+  docType?: string;
+  has_cover?: boolean;
   identity: Identity;
   chapters: Chapter[];
   format_config?: FormatConfig;
