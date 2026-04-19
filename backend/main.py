@@ -51,12 +51,37 @@ class Identity(BaseModel):
 class FormatConfig(BaseModel):
     font_name: str = "Times New Roman"
     font_size_body: int = 12
-    font_size_heading: int = 14
+    font_size_heading: int = 14       # legacy alias for h1
+    font_size_h1: Optional[int] = None
+    font_size_h2: Optional[int] = None
+    font_size_h3: Optional[int] = None
+    font_size_subtitle: Optional[int] = None
     line_spacing: float = 1.5
+    h1_bold: bool = True
+    h1_uppercase: bool = True
+    h1_center: bool = True
+    h2_bold: bool = True
+    h3_bold: bool = True
     margin_top: float = 4.0
     margin_bottom: float = 3.0
     margin_left: float = 4.0
     margin_right: float = 3.0
+    page_number_prelim: str = "roman"     # "roman" | "arabic" | "none"
+    page_number_body: str = "arabic"      # "arabic" | "roman"
+    numbering_system: str = "standard-indo"  # "standard-indo" | "numeric" | "custom"
+    first_line_indent: float = 1.27
+
+    @property
+    def h1_size(self) -> int:
+        return self.font_size_h1 or self.font_size_heading
+
+    @property
+    def h2_size(self) -> int:
+        return self.font_size_h2 or self.font_size_body
+
+    @property
+    def h3_size(self) -> int:
+        return self.font_size_h3 or self.font_size_body
 
 class GenerateRequest(BaseModel):
     identity: Identity
@@ -149,42 +174,46 @@ def build_document(req: GenerateRequest) -> Document:
 
     # ── Chapters ──
     for chapter in req.chapters:
-        # Chapter heading (centered, bold, uppercase)
+        # Chapter heading — respects h1_bold, h1_uppercase, h1_center
         chapter_title_parts = chapter.title.split(":", 1)
-        bab_number = chapter_title_parts[0].strip().upper()
-        bab_name = chapter_title_parts[1].strip().upper() if len(chapter_title_parts) > 1 else ""
+        bab_number = chapter_title_parts[0].strip()
+        bab_name = chapter_title_parts[1].strip() if len(chapter_title_parts) > 1 else ""
+
+        if fmt.h1_uppercase:
+            bab_number = bab_number.upper()
+            bab_name = bab_name.upper()
 
         h_para = doc.add_paragraph()
-        h_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        h_para.alignment = WD_ALIGN_PARAGRAPH.CENTER if fmt.h1_center else WD_ALIGN_PARAGRAPH.LEFT
         run = h_para.add_run(bab_number)
-        run.bold = True
+        run.bold = fmt.h1_bold
         run.font.name = fmt.font_name
-        run.font.size = Pt(fmt.font_size_heading)
+        run.font.size = Pt(fmt.h1_size)
 
         if bab_name:
             h_para2 = doc.add_paragraph()
-            h_para2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            h_para2.alignment = WD_ALIGN_PARAGRAPH.CENTER if fmt.h1_center else WD_ALIGN_PARAGRAPH.LEFT
             run2 = h_para2.add_run(bab_name)
-            run2.bold = True
+            run2.bold = fmt.h1_bold
             run2.font.name = fmt.font_name
-            run2.font.size = Pt(fmt.font_size_heading)
+            run2.font.size = Pt(fmt.h1_size)
 
         doc.add_paragraph("")
 
         for section in chapter.sections:
-            # Section heading (left, bold)
+            # Section heading — uses h2_size, h2_bold
             s_para = doc.add_paragraph()
             s_run = s_para.add_run(section.title)
-            s_run.bold = True
+            s_run.bold = fmt.h2_bold
             s_run.font.name = fmt.font_name
-            s_run.font.size = Pt(fmt.font_size_body)
+            s_run.font.size = Pt(fmt.h2_size)
 
             # Content paragraphs
             if section.content.strip():
                 for para_text in section.content.strip().split("\n"):
                     if para_text.strip():
                         p = doc.add_paragraph()
-                        p.paragraph_format.first_line_indent = Cm(1.27)
+                        p.paragraph_format.first_line_indent = Cm(fmt.first_line_indent)
                         p.paragraph_format.line_spacing = fmt.line_spacing
                         p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
                         run = p.add_run(para_text.strip())

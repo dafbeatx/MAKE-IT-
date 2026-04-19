@@ -25,12 +25,25 @@ export interface Identity {
 export interface FormatConfig {
   font_name: string;
   font_size_body: number;
-  font_size_heading: number;
+  font_size_heading?: number;      // legacy alias for h1
+  font_size_h1?: number;
+  font_size_h2?: number;
+  font_size_h3?: number;
+  font_size_subtitle?: number;
   line_spacing: number;
+  h1_bold?: boolean;
+  h1_uppercase?: boolean;
+  h1_center?: boolean;
+  h2_bold?: boolean;
+  h3_bold?: boolean;
   margin_top: number;
   margin_bottom: number;
   margin_left: number;
   margin_right: number;
+  page_number_prelim?: "roman" | "arabic" | "none";
+  page_number_body?: "arabic" | "roman";
+  numbering_system?: "standard-indo" | "numeric" | "custom";
+  first_line_indent?: number;
 }
 
 export interface GenerateRequest {

@@ -85,33 +85,55 @@ export default function EditorPage() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const FORMAT_PRESETS: Record<string, {
-        font_name: string;
-        font_size_body: number;
-        font_size_heading: number;
-        line_spacing: number;
-        margin_top: number;
-        margin_bottom: number;
-        margin_left: number;
-        margin_right: number;
-      }> = {
-        "standar-a": {
-          font_name: "Times New Roman", font_size_body: 12, font_size_heading: 14,
-          line_spacing: 1.5, margin_top: 4.0, margin_bottom: 3.0, margin_left: 4.0, margin_right: 3.0,
-        },
-        "standar-b": {
-          font_name: "Arial", font_size_body: 11, font_size_heading: 12,
-          line_spacing: 1.15, margin_top: 2.54, margin_bottom: 2.54, margin_left: 2.54, margin_right: 2.54,
-        },
-        "standar-c": {
-          font_name: "Calibri", font_size_body: 11, font_size_heading: 13,
-          line_spacing: 1.5, margin_top: 2.5, margin_bottom: 2.5, margin_left: 3.0, margin_right: 2.5,
-        },
-      };
-
-      const formatConfig = project.wizard.format === "custom" 
-        ? project.wizard.customFormat 
-        : (FORMAT_PRESETS[project.wizard.format] || FORMAT_PRESETS["standar-a"]);
+      // Resolve format config from preset or custom
+      const wf = project.wizard;
+      const formatConfig = wf.format === "custom"
+        ? {
+            font_name: wf.customFormat.font_name,
+            font_size_body: wf.customFormat.font_size_body,
+            font_size_h1: wf.customFormat.font_size_h1,
+            font_size_h2: wf.customFormat.font_size_h2,
+            font_size_h3: wf.customFormat.font_size_h3,
+            font_size_subtitle: wf.customFormat.font_size_subtitle,
+            font_size_heading: wf.customFormat.font_size_h1,
+            line_spacing: wf.customFormat.line_spacing,
+            h1_bold: wf.customFormat.h1_bold,
+            h1_uppercase: wf.customFormat.h1_uppercase,
+            h1_center: wf.customFormat.h1_center,
+            h2_bold: wf.customFormat.h2_bold,
+            h3_bold: wf.customFormat.h3_bold,
+            margin_top: wf.customFormat.margin_top,
+            margin_bottom: wf.customFormat.margin_bottom,
+            margin_left: wf.customFormat.margin_left,
+            margin_right: wf.customFormat.margin_right,
+            page_number_prelim: wf.customFormat.page_number_prelim,
+            page_number_body: wf.customFormat.page_number_body,
+            numbering_system: wf.customFormat.numbering_system,
+            first_line_indent: wf.customFormat.first_line_indent,
+          }
+        : {
+            font_name: wf.customFormat.font_name,
+            font_size_body: wf.customFormat.font_size_body,
+            font_size_h1: wf.customFormat.font_size_h1,
+            font_size_h2: wf.customFormat.font_size_h2,
+            font_size_h3: wf.customFormat.font_size_h3,
+            font_size_subtitle: wf.customFormat.font_size_subtitle,
+            font_size_heading: wf.customFormat.font_size_h1,
+            line_spacing: wf.customFormat.line_spacing,
+            h1_bold: wf.customFormat.h1_bold,
+            h1_uppercase: wf.customFormat.h1_uppercase,
+            h1_center: wf.customFormat.h1_center,
+            h2_bold: wf.customFormat.h2_bold,
+            h3_bold: wf.customFormat.h3_bold,
+            margin_top: wf.customFormat.margin_top,
+            margin_bottom: wf.customFormat.margin_bottom,
+            margin_left: wf.customFormat.margin_left,
+            margin_right: wf.customFormat.margin_right,
+            page_number_prelim: wf.customFormat.page_number_prelim,
+            page_number_body: wf.customFormat.page_number_body,
+            numbering_system: wf.customFormat.numbering_system,
+            first_line_indent: wf.customFormat.first_line_indent,
+          };
 
       const blob = await generateDocument({
         identity: project.wizard.identity,

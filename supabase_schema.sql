@@ -105,3 +105,44 @@ USING (
   bucket_id = 'user-documents' AND 
   auth.uid()::text = (storage.foldername(name))[1]
 );
+
+-- ==========================================
+-- FORMAT PRESETS & EXTENDED DOCUMENTS
+-- ==========================================
+
+-- Add format_config column to existing documents table
+ALTER TABLE public.documents
+ADD COLUMN IF NOT EXISTS format_config JSONB DEFAULT '{}'::jsonb;
+
+-- Table for user-saved format presets
+CREATE TABLE IF NOT EXISTS public.format_presets (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    config JSONB NOT NULL,
+    is_default BOOLEAN DEFAULT false,
+    created_at TIMESTAMPTZ DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Create index for fast lookup
+CREATE INDEX IF NOT EXISTS idx_format_presets_user_id ON public.format_presets(user_id);
+
+-- RLS for format_presets
+ALTER TABLE public.format_presets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view their own format presets"
+ON public.format_presets FOR SELECT
+USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own format presets"
+ON public.format_presets FOR INSERT
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own format presets"
+ON public.format_presets FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own format presets"
+ON public.format_presets FOR DELETE
+USING (auth.uid() = user_id);
