@@ -33,6 +33,8 @@ class Section(BaseModel):
     id: str
     title: str
     content: str
+    quran: Optional[str] = None
+    footnote: Optional[str] = None
 
 class Chapter(BaseModel):
     id: str
@@ -70,6 +72,9 @@ class FormatConfig(BaseModel):
     page_number_body: str = "arabic"      # "arabic" | "roman"
     numbering_system: str = "standard-indo"  # "standard-indo" | "numeric" | "custom"
     first_line_indent: float = 1.27
+    has_quran: bool = False
+    has_footnote: bool = False
+    has_abstract: bool = False
 
     @property
     def h1_size(self) -> int:
@@ -87,6 +92,7 @@ class GenerateRequest(BaseModel):
     identity: Identity
     chapters: List[Chapter]
     format_config: FormatConfig = FormatConfig()
+    abstract_paragraphs: Optional[List[str]] = None
 
 # ─── Format Presets ─────────────────────────────────────
 
@@ -170,7 +176,28 @@ def build_document(req: GenerateRequest) -> Document:
         r.font.name = fmt.font_name
         r.font.size = Pt(fmt.font_size_body)
 
-    doc.add_page_break()
+    # ── Abstract ──
+    if fmt.has_abstract and req.abstract_paragraphs:
+        doc.add_page_break()
+        abs_h = doc.add_paragraph()
+        abs_h.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        abs_run = abs_h.add_run("ABSTRAK")
+        abs_run.bold = True
+        abs_run.font.name = fmt.font_name
+        abs_run.font.size = Pt(fmt.font_size_heading)
+        doc.add_paragraph("")
+        
+        for para_text in req.abstract_paragraphs:
+            if para_text.strip():
+                p = doc.add_paragraph()
+                p.paragraph_format.first_line_indent = Cm(fmt.first_line_indent)
+                p.paragraph_format.line_spacing = fmt.line_spacing
+                p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                run = p.add_run(para_text.strip())
+                run.font.name = fmt.font_name
+                run.font.size = Pt(fmt.font_size_body)
+
+        doc.add_page_break()
 
     # ── Chapters ──
     for chapter in req.chapters:
@@ -219,6 +246,24 @@ def build_document(req: GenerateRequest) -> Document:
                         run = p.add_run(para_text.strip())
                         run.font.name = fmt.font_name
                         run.font.size = Pt(fmt.font_size_body)
+
+            # Insert Quran text if configured and present
+            if fmt.has_quran and section.quran and section.quran.strip():
+                q_para = doc.add_paragraph()
+                q_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
+                q_para.paragraph_format.line_spacing = 2.0
+                q_run = q_para.add_run(section.quran.strip())
+                # Quran is typically rendered larger
+                q_run.font.size = Pt(fmt.font_size_body + 6)
+                
+            # Insert Endnotes/Footnotes workaround if configured and present
+            if fmt.has_footnote and section.footnote and section.footnote.strip():
+                fn_para = doc.add_paragraph()
+                fn_para.paragraph_format.space_before = Pt(6)
+                fn_para.alignment = WD_ALIGN_PARAGRAPH.LEFT
+                fn_run = fn_para.add_run("______________________________" + "\n" + section.footnote.strip())
+                fn_run.font.name = fmt.font_name
+                fn_run.font.size = Pt(10)
 
             doc.add_paragraph("")
 

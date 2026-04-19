@@ -58,7 +58,24 @@ export default function WizardPage() {
 
   const updateForm = useCallback(
     <K extends keyof WizardFormData>(key: K, value: WizardFormData[K]) => {
-      setForm((prev) => ({ ...prev, [key]: value }));
+      setForm((prev) => {
+        let newState = { ...prev, [key]: value };
+        
+        // Wipe state clean if user switches to "skripsi"
+        if (key === "docType" && value === "skripsi" && prev.docType !== "skripsi") {
+          newState.chapters = [];
+          newState.identity = {
+            title: "", name: "", nim: "", institution: "", faculty: "", supervisor: "", year: ""
+          };
+          newState.format = "custom"; // Force strictly manual format
+        } else if (key === "docType" && value !== "skripsi" && prev.docType === "skripsi") {
+          // Restore basic layout for other docs
+          newState.chapters = DEFAULT_FORM.chapters;
+          newState.format = "standar-a";
+        }
+
+        return newState;
+      });
     },
     []
   );
@@ -144,6 +161,7 @@ export default function WizardPage() {
           )}
           {step === 4 && (
             <Step4Format
+              docType={form.docType}
               value={form.format}
               onChange={(v) => updateForm("format", v)}
               customFormat={form.customFormat}

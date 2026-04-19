@@ -54,13 +54,20 @@ export default function Step1TipeDokumen({ value, onChange }: Props) {
                   active ? "text-brand-orange" : "text-muted-foreground"
                 }`}
               />
-              <span
-                className={`text-sm font-semibold leading-tight ${
-                  active ? "text-brand-orange" : "text-foreground"
-                }`}
-              >
-                {doc.name}
-              </span>
+              <div className="flex flex-col items-center gap-0.5">
+                <span
+                  className={`text-sm font-semibold leading-tight ${
+                    active ? "text-brand-orange" : "text-foreground"
+                  }`}
+                >
+                  {doc.name}
+                </span>
+                {doc.id === "skripsi" && (
+                  <span className="rounded bg-brand-orange/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-brand-orange">
+                    Rekomendasi
+                  </span>
+                )}
+              </div>
             </button>
           );
         })}

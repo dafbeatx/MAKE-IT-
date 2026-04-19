@@ -34,11 +34,21 @@ export interface CustomFormatConfig {
 
   // ── Indentasi ──
   first_line_indent: number;
+  // ── Fitur Khusus ──
+  has_quran: boolean;
+  has_footnote: boolean;
+  has_abstract: boolean;
+}
+
+export interface WizardChapter {
+  id: string;
+  name: string;
+  sections?: { id: string; title: string }[];
 }
 
 export interface WizardFormData {
   docType: string;
-  chapters: { id: string; name: string }[];
+  chapters: WizardChapter[];
   identity: {
     title: string;
     name: string;
@@ -73,4 +83,7 @@ export const DEFAULT_CUSTOM_FORMAT: CustomFormatConfig = {
   page_number_body: "arabic",
   numbering_system: "standard-indo",
   first_line_indent: 1.27,
+  has_quran: false,
+  has_footnote: false,
+  has_abstract: false,
 };

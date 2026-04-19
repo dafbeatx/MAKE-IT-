@@ -34,12 +34,15 @@ export interface EditorChapter {
     id: string;
     title: string;
     content: string;
+    quran?: string;
+    footnote?: string;
   }[];
 }
 
 export interface ProjectStore {
   wizard: WizardFormData;
   chapters: EditorChapter[];
+  abstract_paragraphs?: string[]; // 6 strings max if abstract is activated
   lastUpdated: string;
 }
 
@@ -61,22 +64,33 @@ export function clearProject() {
 
 export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectStore {
   const chapters: EditorChapter[] = wizard.chapters.map((ch) => {
-    // Basic structural defaults based on common academic standards
-    let sections = [
-      { id: `${ch.id}.1`, title: `${ch.id}.1 Subjek Pembahasan`, content: "" },
-    ];
+    let sections = ch.sections 
+      ? [...ch.sections].map(s => ({ 
+          ...s, 
+          content: "",
+          quran: "",
+          footnote: ""
+        })) 
+      : [];
 
-    if (ch.id === "1") {
-      sections = [
-        { id: "1.1", title: "1.1 Latar Belakang", content: "" },
-        { id: "1.2", title: "1.2 Rumusan Masalah", content: "" },
-        { id: "1.3", title: "1.3 Tujuan Penelitian", content: "" },
-      ];
-    } else if (ch.id === "5") {
-      sections = [
-        { id: "5.1", title: "5.1 Kesimpulan", content: "" },
-        { id: "5.2", title: "5.2 Saran", content: "" },
-      ];
+    // Jika kosong (yakni bukan skripsi / tipe doc lain), generate otomatis
+    if (sections.length === 0) {
+      if (ch.id === "1") {
+        sections = [
+          { id: "1.1", title: "1.1 Latar Belakang", content: "" },
+          { id: "1.2", title: "1.2 Rumusan Masalah", content: "" },
+          { id: "1.3", title: "1.3 Tujuan Penelitian", content: "" },
+        ];
+      } else if (ch.id === "5") {
+        sections = [
+          { id: "5.1", title: "5.1 Kesimpulan", content: "" },
+          { id: "5.2", title: "5.2 Saran", content: "" },
+        ];
+      } else {
+        sections = [
+          { id: `${ch.id}.1`, title: `${ch.id}.1 Subjek Pembahasan`, content: "" },
+        ];
+      }
     }
 
     return {
@@ -89,6 +103,7 @@ export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectS
   return {
     wizard,
     chapters,
+    abstract_paragraphs: wizard.customFormat.has_abstract ? ["", "", "", "", "", ""] : undefined,
     lastUpdated: new Date().toISOString(),
   };
 }

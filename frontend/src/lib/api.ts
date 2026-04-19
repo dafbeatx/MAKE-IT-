@@ -4,6 +4,8 @@ export interface Section {
   id: string;
   title: string;
   content: string;
+  quran?: string;
+  footnote?: string;
 }
 
 export interface Chapter {
@@ -44,12 +46,16 @@ export interface FormatConfig {
   page_number_body?: "arabic" | "roman";
   numbering_system?: "standard-indo" | "numeric" | "custom";
   first_line_indent?: number;
+  has_quran?: boolean;
+  has_footnote?: boolean;
+  has_abstract?: boolean;
 }
 
 export interface GenerateRequest {
   identity: Identity;
   chapters: Chapter[];
   format_config?: FormatConfig;
+  abstract_paragraphs?: string[];
 }
 
 export async function generateDocument(req: GenerateRequest): Promise<Blob> {

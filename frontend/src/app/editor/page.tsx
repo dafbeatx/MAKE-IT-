@@ -67,7 +67,12 @@ export default function EditorPage() {
     setExpandedSection(expandedSection === id ? null : id);
   };
 
-  const updateContent = (chapterIdx: number, sectionIdx: number, content: string) => {
+  const updateContent = (
+    chapterIdx: number,
+    sectionIdx: number,
+    field: "content" | "quran" | "footnote",
+    value: string
+  ) => {
     setProject((prev) => {
       if (!prev) return null;
       const next = { ...prev };
@@ -75,10 +80,19 @@ export default function EditorPage() {
       nextChapters[chapterIdx] = {
         ...nextChapters[chapterIdx],
         sections: nextChapters[chapterIdx].sections.map((s, i) =>
-          i === sectionIdx ? { ...s, content } : s
+          i === sectionIdx ? { ...s, [field]: value } : s
         ),
       };
       return { ...next, chapters: nextChapters };
+    });
+  };
+
+  const updateAbstract = (index: number, content: string) => {
+    setProject((prev) => {
+      if (!prev || !prev.abstract_paragraphs) return null;
+      const newAbs = [...prev.abstract_paragraphs];
+      newAbs[index] = content;
+      return { ...prev, abstract_paragraphs: newAbs };
     });
   };
 
@@ -139,6 +153,7 @@ export default function EditorPage() {
         identity: project.wizard.identity,
         chapters: project.chapters,
         format_config: formatConfig,
+        abstract_paragraphs: project.abstract_paragraphs,
       });
       const filename = `MAKEIT_${project.wizard.identity.name.replace(/\s+/g, "_") || "Dokumen"}.docx`;
       downloadBlob(blob, filename);
@@ -243,6 +258,32 @@ export default function EditorPage() {
           />
         </div>
 
+        {/* Abstract Box */}
+        {project.wizard.customFormat?.has_abstract && (
+          <div className="mb-5 overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="border-b border-border bg-muted/20 px-4 py-3 sm:px-5 sm:py-4">
+              <h3 className="font-bold sm:text-lg">Abstrak (6 Paragraf Khusus)</h3>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                Tulis abstrak secara manual per paragraf. Paragraf ini akan dirender secara terpisah di format Skripsi.
+              </p>
+            </div>
+            <div className="flex flex-col gap-4 p-4 sm:p-5">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                <div key={`abs-${i}`} className="flex flex-col gap-1.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Paragraf {i + 1}</span>
+                  <textarea
+                    className="w-full rounded-xl border border-border bg-background p-3 text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20"
+                    rows={2}
+                    placeholder={`Isi paragraf ${i + 1} abstrak...`}
+                    value={project.abstract_paragraphs?.[i] || ""}
+                    onChange={(e) => updateAbstract(i, e.target.value)}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Accordion chapters */}
         <div className="flex flex-col gap-3">
           {project.chapters.map((chapter, chIdx) => (
@@ -297,13 +338,36 @@ export default function EditorPage() {
 
                       {expandedSection === section.id && (
                         <div className="px-4 pb-4 sm:px-5">
-                          <textarea
-                            className="w-full rounded-xl border border-border bg-background p-4 text-base leading-relaxed placeholder:text-muted-foreground/60 focus:border-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-orange/20 sm:text-sm"
-                            rows={8}
-                            placeholder={`Ketik atau paste isi bagian "${section.title}" di sini...`}
-                            value={section.content}
-                            onChange={(e) => updateContent(chIdx, sIdx, e.target.value)}
-                          />
+                          <div className="flex flex-col gap-3">
+                            <textarea
+                              className="w-full rounded-xl border border-border bg-background p-4 text-base leading-relaxed placeholder:text-muted-foreground/60 focus:border-brand-orange focus:outline-none focus:ring-2 focus:ring-brand-orange/20 sm:text-sm"
+                              rows={6}
+                              placeholder={`Ketik atau paste isi teks utama "${section.title}" di sini...`}
+                              value={section.content}
+                              onChange={(e) => updateContent(chIdx, sIdx, "content", e.target.value)}
+                            />
+
+                            {project.wizard.customFormat?.has_quran && (
+                              <textarea
+                                className="w-full rounded-xl border border-border bg-background p-4 text-right text-lg font-serif leading-loose placeholder:text-left placeholder:font-sans placeholder:text-base placeholder:text-muted-foreground/60 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 sm:text-lg"
+                                rows={3}
+                                dir="rtl"
+                                placeholder={`(Opsional) Sisipkan Ayat Al-Qur'an untuk bagian ini...`}
+                                value={section.quran || ""}
+                                onChange={(e) => updateContent(chIdx, sIdx, "quran", e.target.value)}
+                              />
+                            )}
+
+                            {project.wizard.customFormat?.has_footnote && (
+                              <textarea
+                                className="w-full rounded-xl border border-border bg-muted/40 p-3 text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-brand-blue focus:outline-none focus:ring-2 focus:ring-brand-blue/20"
+                                rows={2}
+                                placeholder={`(Opsional) Kutipan / Footnote / Referensi untuk paragraf akhir...`}
+                                value={section.footnote || ""}
+                                onChange={(e) => updateContent(chIdx, sIdx, "footnote", e.target.value)}
+                              />
+                            )}
+                          </div>
                           <p className="mt-2 text-right text-[11px] text-muted-foreground">
                             {section.content.length} karakter ·{" "}
                             {section.content.split(/\s+/).filter(Boolean).length} kata
