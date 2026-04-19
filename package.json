@@ -1,0 +1,11 @@
+{
+  "name": "makeit-document-generator",
+  "private": true,
+  "scripts": {
+    "dev": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build",
+    "start": "cd frontend && npm run start",
+    "dev:backend": "cd backend && source venv/bin/activate && uvicorn main:app --reload --port 8000",
+    "dev:bot": "cd telegram-bot && source venv/bin/activate && python bot.py"
+  }
+}

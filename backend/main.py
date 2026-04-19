@@ -1,0 +1,366 @@
+import os
+import io
+import tempfile
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
+from typing import Optional, List
+from dotenv import load_dotenv
+from docx import Document
+from docx.shared import Pt, Cm, Inches
+from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+load_dotenv()
+
+app = FastAPI(
+    title="MAKE!T Document Generator API",
+    version="2.0.0",
+    description="Template-based document generator. No AI — users write content, system formats it.",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# ─── Models ─────────────────────────────────────────────
+
+class Section(BaseModel):
+    id: str
+    title: str
+    content: str
+
+class Chapter(BaseModel):
+    id: str
+    title: str
+    sections: List[Section]
+
+class Identity(BaseModel):
+    title: str
+    name: str
+    nim: str
+    institution: str
+    faculty: str
+    supervisor: str
+    year: str
+
+class FormatConfig(BaseModel):
+    font_name: str = "Times New Roman"
+    font_size_body: int = 12
+    font_size_heading: int = 14
+    line_spacing: float = 1.5
+    margin_top: float = 4.0
+    margin_bottom: float = 3.0
+    margin_left: float = 4.0
+    margin_right: float = 3.0
+
+class GenerateRequest(BaseModel):
+    identity: Identity
+    chapters: List[Chapter]
+    format_config: FormatConfig = FormatConfig()
+
+# ─── Format Presets ─────────────────────────────────────
+
+FORMAT_PRESETS = {
+    "standar-a": FormatConfig(
+        font_name="Times New Roman", font_size_body=12, font_size_heading=14,
+        line_spacing=1.5, margin_top=4.0, margin_bottom=3.0, margin_left=4.0, margin_right=3.0,
+    ),
+    "standar-b": FormatConfig(
+        font_name="Arial", font_size_body=11, font_size_heading=12,
+        line_spacing=1.15, margin_top=2.54, margin_bottom=2.54, margin_left=2.54, margin_right=2.54,
+    ),
+    "standar-c": FormatConfig(
+        font_name="Calibri", font_size_body=11, font_size_heading=13,
+        line_spacing=1.5, margin_top=2.5, margin_bottom=2.5, margin_left=3.0, margin_right=2.5,
+    ),
+}
+
+# ─── Document Generation Logic ─────────────────────────
+
+def build_document(req: GenerateRequest) -> Document:
+    doc = Document()
+    fmt = req.format_config
+
+    # Set margins
+    for section in doc.sections:
+        section.top_margin = Cm(fmt.margin_top)
+        section.bottom_margin = Cm(fmt.margin_bottom)
+        section.left_margin = Cm(fmt.margin_left)
+        section.right_margin = Cm(fmt.margin_right)
+
+    # ── Cover Page ──
+    for _ in range(6):
+        doc.add_paragraph("")
+
+    title_para = doc.add_paragraph()
+    title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = title_para.add_run(req.identity.title.upper())
+    run.bold = True
+    run.font.name = fmt.font_name
+    run.font.size = Pt(fmt.font_size_heading)
+
+    doc.add_paragraph("")
+    
+    type_para = doc.add_paragraph()
+    type_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = type_para.add_run("SKRIPSI")
+    run.font.name = fmt.font_name
+    run.font.size = Pt(fmt.font_size_body)
+
+    for _ in range(4):
+        doc.add_paragraph("")
+
+    author_para = doc.add_paragraph()
+    author_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = author_para.add_run("Disusun oleh:")
+    run.font.name = fmt.font_name
+    run.font.size = Pt(fmt.font_size_body)
+
+    name_para = doc.add_paragraph()
+    name_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = name_para.add_run(req.identity.name.upper())
+    run.bold = True
+    run.font.name = fmt.font_name
+    run.font.size = Pt(fmt.font_size_body)
+
+    nim_para = doc.add_paragraph()
+    nim_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    run = nim_para.add_run(f"NIM: {req.identity.nim}")
+    run.font.name = fmt.font_name
+    run.font.size = Pt(fmt.font_size_body)
+
+    for _ in range(4):
+        doc.add_paragraph("")
+
+    for text in [req.identity.faculty.upper(), req.identity.institution.upper(), req.identity.year]:
+        p = doc.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        r = p.add_run(text)
+        r.bold = True
+        r.font.name = fmt.font_name
+        r.font.size = Pt(fmt.font_size_body)
+
+    doc.add_page_break()
+
+    # ── Chapters ──
+    for chapter in req.chapters:
+        # Chapter heading (centered, bold, uppercase)
+        chapter_title_parts = chapter.title.split(":", 1)
+        bab_number = chapter_title_parts[0].strip().upper()
+        bab_name = chapter_title_parts[1].strip().upper() if len(chapter_title_parts) > 1 else ""
+
+        h_para = doc.add_paragraph()
+        h_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
+        run = h_para.add_run(bab_number)
+        run.bold = True
+        run.font.name = fmt.font_name
+        run.font.size = Pt(fmt.font_size_heading)
+
+        if bab_name:
+            h_para2 = doc.add_paragraph()
+            h_para2.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            run2 = h_para2.add_run(bab_name)
+            run2.bold = True
+            run2.font.name = fmt.font_name
+            run2.font.size = Pt(fmt.font_size_heading)
+
+        doc.add_paragraph("")
+
+        for section in chapter.sections:
+            # Section heading (left, bold)
+            s_para = doc.add_paragraph()
+            s_run = s_para.add_run(section.title)
+            s_run.bold = True
+            s_run.font.name = fmt.font_name
+            s_run.font.size = Pt(fmt.font_size_body)
+
+            # Content paragraphs
+            if section.content.strip():
+                for para_text in section.content.strip().split("\n"):
+                    if para_text.strip():
+                        p = doc.add_paragraph()
+                        p.paragraph_format.first_line_indent = Cm(1.27)
+                        p.paragraph_format.line_spacing = fmt.line_spacing
+                        p.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                        run = p.add_run(para_text.strip())
+                        run.font.name = fmt.font_name
+                        run.font.size = Pt(fmt.font_size_body)
+
+            doc.add_paragraph("")
+
+        doc.add_page_break()
+
+    return doc
+
+
+# ─── Endpoints ──────────────────────────────────────────
+
+@app.get("/")
+def read_root():
+    return {"app": "MAKE!T", "version": "2.0.0", "ai": False}
+
+
+@app.post("/api/generate")
+async def generate_document(req: GenerateRequest):
+    """Generate a .docx from user-provided content. No AI involved."""
+    try:
+        doc = build_document(req)
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+
+        filename = f"MAKEIT_{req.identity.name.replace(' ', '_')}.docx"
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/rapikan")
+async def rapikan_document(
+    file: UploadFile = File(...),
+    format_preset: str = Form("standar-a"),
+):
+    """Upload a .docx and apply academic formatting without changing text content."""
+    if not file.filename or not file.filename.endswith(".docx"):
+        raise HTTPException(status_code=400, detail="File harus berformat .docx")
+
+    fmt = FORMAT_PRESETS.get(format_preset, FORMAT_PRESETS["standar-a"])
+
+    try:
+        content = await file.read()
+        doc = Document(io.BytesIO(content))
+
+        # Apply margins
+        for section in doc.sections:
+            section.top_margin = Cm(fmt.margin_top)
+            section.bottom_margin = Cm(fmt.margin_bottom)
+            section.left_margin = Cm(fmt.margin_left)
+            section.right_margin = Cm(fmt.margin_right)
+
+        # Apply font and spacing to all paragraphs
+        for para in doc.paragraphs:
+            para.paragraph_format.line_spacing = fmt.line_spacing
+            for run in para.runs:
+                run.font.name = fmt.font_name
+                run.font.size = Pt(fmt.font_size_body)
+
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="RAPIKAN_{file.filename}"'},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/spss-table")
+async def process_spss(file: UploadFile = File(...)):
+    """Upload .sav or .xlsx → generate descriptive statistics table in Word."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file provided")
+
+    ext = file.filename.rsplit(".", 1)[-1].lower()
+    if ext not in ("sav", "xlsx", "xls"):
+        raise HTTPException(status_code=400, detail="Format harus .sav, .xlsx, atau .xls")
+
+    try:
+        content = await file.read()
+        tmp_path = tempfile.mktemp(suffix=f".{ext}")
+        with open(tmp_path, "wb") as f:
+            f.write(content)
+
+        if ext == "sav":
+            import pyreadstat
+            df, meta = pyreadstat.read_sav(tmp_path)
+        else:
+            import pandas as pd
+            df = pd.read_excel(tmp_path)
+
+        # Build Word doc with descriptive stats table
+        doc = Document()
+        doc.add_heading("Tabel Statistik Deskriptif", level=2)
+
+        stats = df.describe().round(3)
+        table = doc.add_table(rows=1, cols=len(stats.columns) + 1)
+        table.style = "Light Grid Accent 1"
+
+        # Header row
+        hdr = table.rows[0].cells
+        hdr[0].text = "Statistik"
+        for i, col in enumerate(stats.columns):
+            hdr[i + 1].text = str(col)
+
+        # Data rows
+        for idx, row in stats.iterrows():
+            cells = table.add_row().cells
+            cells[0].text = str(idx)
+            for i, val in enumerate(row):
+                cells[i + 1].text = str(val)
+
+        # Apply font
+        for row in table.rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    for run in para.runs:
+                        run.font.name = "Times New Roman"
+                        run.font.size = Pt(10)
+
+        buffer = io.BytesIO()
+        doc.save(buffer)
+        buffer.seek(0)
+
+        os.unlink(tmp_path)
+
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={"Content-Disposition": f'attachment; filename="Tabel_{file.filename}.docx"'},
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/api/template/render")
+async def render_custom_template(
+    template: UploadFile = File(...),
+    data: str = Form("{}"),
+):
+    """
+    Upload a custom .docx template with Jinja2 {{ placeholders }}.
+    Pass context data as JSON string to fill in the placeholders.
+    """
+    import json
+    from template_renderer import render_uploaded_template
+
+    if not template.filename or not template.filename.endswith(".docx"):
+        raise HTTPException(status_code=400, detail="Template harus .docx")
+
+    try:
+        context = json.loads(data)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Data harus berformat JSON valid")
+
+    try:
+        buffer = await render_uploaded_template(template, context)
+        return StreamingResponse(
+            buffer,
+            media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            headers={
+                "Content-Disposition": f'attachment; filename="rendered_{template.filename}"'
+            },
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

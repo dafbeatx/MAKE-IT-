@@ -1,0 +1,44 @@
+{
+  "standar-a": {
+    "name": "Standar A — Times New Roman",
+    "font_name": "Times New Roman",
+    "font_size_body": 12,
+    "font_size_heading": 14,
+    "line_spacing": 1.5,
+    "margin_top": 4.0,
+    "margin_bottom": 3.0,
+    "margin_left": 4.0,
+    "margin_right": 3.0,
+    "page_number_style": "roman_and_arabic",
+    "heading_alignment": "center",
+    "heading_case": "upper"
+  },
+  "standar-b": {
+    "name": "Standar B — Arial",
+    "font_name": "Arial",
+    "font_size_body": 11,
+    "font_size_heading": 12,
+    "line_spacing": 1.15,
+    "margin_top": 2.54,
+    "margin_bottom": 2.54,
+    "margin_left": 2.54,
+    "margin_right": 2.54,
+    "page_number_style": "arabic_only",
+    "heading_alignment": "left",
+    "heading_case": "title"
+  },
+  "standar-c": {
+    "name": "Standar C — Calibri Modern",
+    "font_name": "Calibri",
+    "font_size_body": 11,
+    "font_size_heading": 13,
+    "line_spacing": 1.5,
+    "margin_top": 2.5,
+    "margin_bottom": 2.5,
+    "margin_left": 3.0,
+    "margin_right": 2.5,
+    "page_number_style": "roman_and_arabic",
+    "heading_alignment": "center",
+    "heading_case": "upper"
+  }
+}
