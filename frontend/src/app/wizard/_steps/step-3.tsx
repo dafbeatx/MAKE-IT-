@@ -101,11 +101,14 @@ export default function Step3Identitas({ value, onChange, hasCover }: Props) {
           <Label htmlFor="w-title" className="text-sm font-semibold">
             Judul Dokumen
           </Label>
+          <p className="text-xs text-muted-foreground">
+            Tips: Apit kata asing menggunakan bintang untuk cetak miring otomatis (cth: *Online*)
+          </p>
           <Input
             id="w-title"
             value={value.title}
             onChange={(e) => update("title", e.target.value)}
-            placeholder="Contoh: Analisis Efektivitas Metode Pembelajaran..."
+            placeholder="Contoh: Analisis Efektivitas Metode *Quantum Learning*..."
             className="h-12 text-base sm:h-11 sm:text-sm"
           />
         </div>

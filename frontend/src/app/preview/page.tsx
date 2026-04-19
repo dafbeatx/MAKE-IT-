@@ -93,8 +93,8 @@ export default function PreviewPage() {
 
   // ── Page style derived from wizard format ──
   const pageStyle = (extraMarginTop?: string) => ({
-    width: `${(210 / 25.4) * 96}px`,
-    minHeight: `${(297 / 25.4) * 96}px`,
+    width: "210mm",
+    minHeight: "297mm",
     transform: `scale(${zoom / 100})`,
     transformOrigin: "top center" as const,
     fontFamily: `'${fmt.font_name}', Times, serif`,
@@ -120,6 +120,18 @@ export default function PreviewPage() {
   // ── Count pages for numbering ──
   let pageCounter = 0; 
   if (project.wizard.hasCover) pageCounter++;
+
+  // ── Render markdown italics ──
+  const renderMarkdown = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(\*[^*\n]+\*|_[^_\n]+_)/g);
+    return parts.map((part, i) => {
+      if ((part.startsWith("*") && part.endsWith("*")) || (part.startsWith("_") && part.endsWith("_"))) {
+        return <i key={i} className="italic">{part.slice(1, -1)}</i>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-200 dark:bg-gray-900">
@@ -202,7 +214,7 @@ export default function PreviewPage() {
                         textTransform: fmt.h1_uppercase ? "uppercase" : "none",
                       }}
                     >
-                      {identity.title}
+                      {renderMarkdown(identity.title)}
                     </p>
                   )}
 
@@ -216,7 +228,7 @@ export default function PreviewPage() {
                         textTransform: "uppercase",
                       }}
                     >
-                      {identity.docSubtype}
+                      {renderMarkdown(identity.docSubtype)}
                     </p>
                   )}
 
@@ -265,27 +277,18 @@ export default function PreviewPage() {
                 <div className="flex w-full flex-col items-center pb-2">
                   {/* 8. Prodi + Fakultas + Institusi */}
                   <div
-                    className="flex flex-col items-center font-bold uppercase leading-relaxed"
-                    style={{ fontSize: bodyFontSize }}
+                    className="flex flex-col items-center font-bold uppercase"
+                    style={{ fontSize: bodyFontSize, lineHeight: "1.2" }}
                   >
-                    {identity.prodi && <p>PROGRAM STUDI {identity.prodi}</p>}
-                    {identity.faculty && <p>FAKULTAS {identity.faculty}</p>}
+                    {identity.prodi && <p>{identity.prodi}</p>}
+                    {identity.faculty && <p>{identity.faculty}</p>}
                     {identity.institution && <p>{identity.institution}</p>}
+                    {identity.address && <p>{identity.address}</p>}
                   </div>
-
-                  {/* 9. Alamat Kampus */}
-                  {identity.address && (
-                    <p
-                      className="mt-1 font-bold uppercase"
-                      style={{ fontSize: bodyFontSize }}
-                    >
-                      {identity.address}
-                    </p>
-                  )}
 
                   {/* 10. Tahun Masehi / Hijriah */}
                   {(identity.year || identity.year_hijri) && (
-                    <p className="mt-2 font-bold" style={{ fontSize: bodyFontSize }}>
+                    <p className="mt-1 font-bold" style={{ fontSize: bodyFontSize, lineHeight: "1.2" }}>
                       {[identity.year, identity.year_hijri].filter(Boolean).join(" / ")}
                     </p>
                   )}

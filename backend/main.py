@@ -139,16 +139,26 @@ def build_document(req: GenerateRequest) -> Document:
     if req.has_cover:
 
         def _add_centered_line(text: str, font_size: int, bold: bool = False, italic: bool = False, spacing_after: int = 0):
-            """Helper to add a single centered line with consistent formatting."""
+            """Helper to add a single centered line with consistent formatting, parsing *Markdown* italics."""
             p = doc.add_paragraph()
             p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             if spacing_after:
                 p.paragraph_format.space_after = Pt(spacing_after)
-            r = p.add_run(text)
-            r.bold = bold
-            r.italic = italic
-            r.font.name = fmt.font_name
-            r.font.size = Pt(font_size)
+            
+            import re
+            parts = re.split(r'(\*[^*\n]+\*|_[^_\n]+_)', text)
+            for part in parts:
+                if not part: continue
+                is_markdown_italic = False
+                if (part.startswith('*') and part.endswith('*')) or (part.startswith('_') and part.endswith('_')):
+                    part = part[1:-1]
+                    is_markdown_italic = True
+                
+                r = p.add_run(part)
+                r.bold = bold
+                r.italic = italic or is_markdown_italic
+                r.font.name = fmt.font_name
+                r.font.size = Pt(font_size)
 
         def _add_logo(width_inches: float):
             """Helper to safely decode and insert a base64 logo."""
@@ -222,9 +232,9 @@ def build_document(req: GenerateRequest) -> Document:
         # 7. Institution block (Prodi → Fakultas → Institusi)
         institution_lines: list[str] = []
         if req.identity.prodi:
-            institution_lines.append(f"PROGRAM STUDI {req.identity.prodi.upper()}")
+            institution_lines.append(req.identity.prodi.upper())
         if req.identity.faculty:
-            institution_lines.append(f"FAKULTAS {req.identity.faculty.upper()}")
+            institution_lines.append(req.identity.faculty.upper())
         if req.identity.institution:
             institution_lines.append(req.identity.institution.upper())
 
