@@ -2,12 +2,12 @@ import asyncio
 import os
 import io
 import logging
-import aiohttp
-from aiogram import Bot, Dispatcher, types, F
-from aiogram.filters.command import Command
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import BufferedInputFile
+import aiohttp  # type: ignore
+from aiogram import Bot, Dispatcher, types, F  # type: ignore
+from aiogram.filters.command import Command  # type: ignore
+from aiogram.fsm.context import FSMContext  # type: ignore
+from aiogram.fsm.state import State, StatesGroup  # type: ignore
+from aiogram.types import BufferedInputFile  # type: ignore
 from dotenv import load_dotenv
 
 load_dotenv()

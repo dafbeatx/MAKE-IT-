@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CustomFormatConfig, DEFAULT_CUSTOM_FORMAT } from "@/lib/format-types";
+import { CustomFormatConfig, DEFAULT_CUSTOM_FORMAT, WizardChapter } from "@/lib/format-types";
 
 // ── Preset Definitions ──────────────────────────────────
 
@@ -166,7 +166,7 @@ function SectionToggle({
 
 interface Props {
   docType: string;
-  chapters?: any[];
+  chapters?: WizardChapter[];
   value: string;
   onChange: (v: string) => void;
   customFormat?: CustomFormatConfig;

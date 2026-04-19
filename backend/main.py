@@ -133,111 +133,106 @@ def build_document(req: GenerateRequest) -> Document:
         section.right_margin = Cm(fmt.margin_right)
 
     # ── Cover Page ──
+    # Only generated when user explicitly enables "Sampul Depan" in Step 2.
+    # No placeholder text — only renders data the user has actually filled in.
     if req.has_cover:
-        # 1. Top Logo (Centered)
-        if req.identity.logo:
+
+        def _add_centered_line(text: str, font_size: int, bold: bool = False, italic: bool = False, spacing_after: int = 0):
+            """Helper to add a single centered line with consistent formatting."""
+            p = doc.add_paragraph()
+            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            if spacing_after:
+                p.paragraph_format.space_after = Pt(spacing_after)
+            r = p.add_run(text)
+            r.bold = bold
+            r.italic = italic
+            r.font.name = fmt.font_name
+            r.font.size = Pt(font_size)
+
+        def _add_logo(width_inches: float):
+            """Helper to safely decode and insert a base64 logo."""
+            if not req.identity.logo:
+                return
             try:
-                header, encoded = req.identity.logo.split(",", 1)
+                _header, encoded = req.identity.logo.split(",", 1)
                 image_data = base64.b64decode(encoded)
                 logo_io = io.BytesIO(image_data)
                 logo_para = doc.add_paragraph()
                 logo_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 logo_run = logo_para.add_run()
-                logo_run.add_picture(logo_io, width=Inches(1.2))
+                logo_run.add_picture(logo_io, width=Inches(width_inches))
             except Exception as e:
-                print("Failed to decode top logo:", e)
+                print("Failed to decode logo:", e)
 
-        # 2. Title (H1, Bold, Uppercase)
-        title_para = doc.add_paragraph()
-        title_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = title_para.add_run((req.identity.title or "JUDUL SKRIPSI").upper())
-        run.bold = True
-        run.font.name = fmt.font_name
-        run.font.size = Pt(fmt.font_size_heading)
+        # 1. Top Logo
+        _add_logo(1.2)
 
-        # 3. Doc Type (Skripsi/Seminar Hasil)
-        type_para = doc.add_paragraph()
-        type_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = type_para.add_run((req.identity.docSubtype or "SKRIPSI").upper())
-        run.bold = True
-        run.font.name = fmt.font_name
-        run.font.size = Pt(fmt.font_size_body)
+        # 2. Judul Skripsi (from user data)
+        if req.identity.title:
+            _add_centered_line(
+                req.identity.title.upper(),
+                fmt.h1_size,
+                bold=True,
+                spacing_after=6,
+            )
+
+        # 3. Doc Subtype (SKRIPSI / SEMINAR HASIL / etc.)
+        if req.identity.docSubtype:
+            _add_centered_line(
+                req.identity.docSubtype.upper(),
+                fmt.font_size_body,
+                bold=True,
+                spacing_after=6,
+            )
 
         doc.add_paragraph("")
 
         # 4. Degree Purpose Text
-        purpose_para = doc.add_paragraph()
-        purpose_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = purpose_para.add_run(req.identity.degree_purpose or "Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan")
-        run.font.name = fmt.font_name
-        run.font.italic = True
-        run.font.size = Pt(fmt.font_size_body)
+        if req.identity.degree_purpose:
+            _add_centered_line(
+                req.identity.degree_purpose,
+                fmt.font_size_body,
+                italic=True,
+            )
 
         for _ in range(2):
             doc.add_paragraph("")
 
-        # 5. Middle Logo (Centered)
-        if req.identity.logo:
-            try:
-                header, encoded = req.identity.logo.split(",", 1)
-                image_data = base64.b64decode(encoded)
-                logo_io = io.BytesIO(image_data)
-                logo_para = doc.add_paragraph()
-                logo_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                logo_run = logo_para.add_run()
-                logo_run.add_picture(logo_io, width=Inches(1.8)) # Large logo in middle
-            except Exception as e:
-                print("Failed to decode middle logo:", e)
+        # 5. Middle Logo (large, centered)
+        _add_logo(1.8)
 
         for _ in range(2):
             doc.add_paragraph("")
 
-        # 6. Disusun Oleh
-        author_para = doc.add_paragraph()
-        author_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = author_para.add_run("Disusun Oleh:")
-        run.font.name = fmt.font_name
-        run.font.size = Pt(fmt.font_size_body)
+        # 6. "Disusun Oleh:"
+        _add_centered_line("Disusun Oleh:", fmt.font_size_body)
 
         # 7. Name & NIM
-        name_para = doc.add_paragraph()
-        name_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = name_para.add_run((req.identity.name or "NAMA MAHASISWA").upper())
-        run.bold = True
-        run.font.name = fmt.font_name
-        run.font.size = Pt(fmt.font_size_body)
+        if req.identity.name:
+            _add_centered_line(req.identity.name.upper(), fmt.font_size_body, bold=True)
 
-        nim_para = doc.add_paragraph()
-        nim_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        run = nim_para.add_run(f"NIM: {req.identity.nim or '-'}")
-        run.bold = True
-        run.font.name = fmt.font_name
-        run.font.size = Pt(fmt.font_size_body)
+        if req.identity.nim:
+            _add_centered_line(f"NIM: {req.identity.nim}", fmt.font_size_body, bold=True)
 
         for _ in range(2):
             doc.add_paragraph("")
 
-        # 8. Institution Info
-        for text in [
-            f"PROGRAM STUDI {req.identity.prodi or 'NAMA PRODI'}",
-            f"FAKULTAS {req.identity.faculty or 'NAMA FAKULTAS'}",
-            req.identity.institution or "INSTITUT UMMUL QURO AL-ISLAMI BOGOR"
-        ]:
-            p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            r = p.add_run(text.upper())
-            r.bold = True
-            r.font.name = fmt.font_name
-            r.font.size = Pt(fmt.font_size_body)
+        # 8. Institution block (Prodi → Fakultas → Institusi)
+        institution_lines: list[str] = []
+        if req.identity.prodi:
+            institution_lines.append(f"PROGRAM STUDI {req.identity.prodi.upper()}")
+        if req.identity.faculty:
+            institution_lines.append(f"FAKULTAS {req.identity.faculty.upper()}")
+        if req.identity.institution:
+            institution_lines.append(req.identity.institution.upper())
 
-        # 9. Years
-        year_para = doc.add_paragraph()
-        year_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        year_text = f"{req.identity.year or '2026'} / {req.identity.year_hijri or '1447 H'}"
-        r = year_para.add_run(year_text)
-        r.bold = True
-        r.font.name = fmt.font_name
-        r.font.size = Pt(fmt.font_size_body)
+        for text in institution_lines:
+            _add_centered_line(text, fmt.font_size_body, bold=True)
+
+        # 9. Years (Masehi / Hijriah)
+        year_parts = [p for p in [req.identity.year, req.identity.year_hijri] if p]
+        if year_parts:
+            _add_centered_line(" / ".join(year_parts), fmt.font_size_body, bold=True)
 
         doc.add_page_break()
 
@@ -482,7 +477,7 @@ async def render_custom_template(
     Pass context data as JSON string to fill in the placeholders.
     """
     import json
-    from template_renderer import render_uploaded_template
+    from template_renderer import render_uploaded_template  # type: ignore
 
     if not template.filename or not template.filename.endswith(".docx"):
         raise HTTPException(status_code=400, detail="Template harus .docx")

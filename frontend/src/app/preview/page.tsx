@@ -43,11 +43,14 @@ export default function PreviewPage() {
 
   // ── Resolve format config ──
   const fmt: CustomFormatConfig = project.wizard.customFormat || DEFAULT_CUSTOM_FORMAT;
+  const identity = project.wizard.identity;
 
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
       const blob = await generateDocument({
+        docType: project.wizard.docType,
+        has_cover: project.wizard.hasCover,
         identity: project.wizard.identity,
         chapters: project.chapters,
         format_config: {
@@ -94,9 +97,20 @@ export default function PreviewPage() {
     minHeight: `${(297 / 25.4) * 96}px`,
     transform: `scale(${zoom / 100})`,
     transformOrigin: "top center" as const,
-    padding: `${Math.round(fmt.margin_top * 37.8)}px ${Math.round(fmt.margin_right * 37.8)}px ${Math.round(fmt.margin_bottom * 37.8)}px ${Math.round(fmt.margin_left * 37.8)}px`,
     fontFamily: `'${fmt.font_name}', Times, serif`,
     marginTop: extraMarginTop || "0",
+  });
+
+  // Cover page uses its own internal padding matching the margins
+  const coverPageStyle = () => ({
+    ...pageStyle(),
+    padding: `${Math.round(fmt.margin_top * 37.8)}px ${Math.round(fmt.margin_right * 37.8)}px ${Math.round(fmt.margin_bottom * 37.8)}px ${Math.round(fmt.margin_left * 37.8)}px`,
+  });
+
+  // Content pages have standard academic margin padding
+  const contentPageStyle = (extraMarginTop?: string) => ({
+    ...pageStyle(extraMarginTop),
+    padding: `${Math.round(fmt.margin_top * 37.8)}px ${Math.round(fmt.margin_right * 37.8)}px ${Math.round(fmt.margin_bottom * 37.8)}px ${Math.round(fmt.margin_left * 37.8)}px`,
   });
 
   const bodyFontSize = `${fmt.font_size_body}pt`;
@@ -160,74 +174,134 @@ export default function PreviewPage() {
       <main className="flex-1 overflow-auto p-4 sm:p-8">
         <div className="mx-auto flex flex-col items-center gap-8 pb-10">
           
-          {/* Page 1: Cover */}
+          {/* ═══════════════════════════════════════════════════════
+              PAGE: COVER (Sampul Depan)
+              Only rendered when user explicitly enables hasCover in Step 2
+              ═══════════════════════════════════════════════════════ */}
           {project.wizard.hasCover && (
             <div
               className="doc-preview origin-top overflow-hidden bg-white text-black shadow-xl"
-              style={pageStyle()}
+              style={coverPageStyle()}
             >
-              <div className="flex h-full flex-col items-center justify-between py-[1.5cm] text-center" style={{ fontFamily: fmt.font_name, paddingLeft: `${fmt.margin_left}cm`, paddingRight: `${fmt.margin_right}cm` }}>
-                
-                {/* TOP SECTION: Logo + Title + Subtype + Purpose */}
-                <div className="flex flex-col items-center w-full">
-                  {project.wizard.identity.logo && (
+              <div
+                className="flex flex-col items-center justify-between text-center"
+                style={{
+                  fontFamily: `'${fmt.font_name}', Times, serif`,
+                  minHeight: `calc(${(297 / 25.4) * 96}px - ${Math.round(fmt.margin_top * 37.8)}px - ${Math.round(fmt.margin_bottom * 37.8)}px)`,
+                }}
+              >
+                {/* ── TOP SECTION: Logo + Judul + SubType + Degree Purpose ── */}
+                <div className="flex w-full flex-col items-center">
+                  {/* Logo Atas */}
+                  {identity.logo && (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={project.wizard.identity.logo} alt="Logo" className="mx-auto mb-8 h-28 w-28 object-contain" />
+                    <img
+                      src={identity.logo}
+                      alt="Logo Institusi"
+                      className="mx-auto mb-6 object-contain"
+                      style={{ height: "100px", width: "100px" }}
+                    />
                   )}
-                  
-                  <p className="mb-6 font-bold uppercase leading-tight" style={{ fontSize: h1FontSize }}>
-                    {project.wizard.identity.title || "JUDUL SKRIPSI BELUM DIISI"}
-                  </p>
-                  
-                  <p className="mb-4 font-bold uppercase tracking-widest" style={{ fontSize: h2FontSize }}>
-                    {project.wizard.identity.docSubtype || "SKRIPSI"}
-                  </p>
 
-                  <p className="mx-auto max-w-[85%] leading-relaxed italic opacity-80" style={{ fontSize: bodyFontSize }}>
-                    {project.wizard.identity.degree_purpose || "Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan"}
-                  </p>
+                  {/* Judul Skripsi — dari data Step 3 */}
+                  {identity.title && (
+                    <p
+                      className="mb-4 font-bold uppercase leading-snug"
+                      style={{ fontSize: h1FontSize }}
+                    >
+                      {identity.title}
+                    </p>
+                  )}
+
+                  {/* Jenis Dokumen (SKRIPSI / SEMINAR HASIL / dll) */}
+                  {(identity.docSubtype) && (
+                    <p
+                      className="mb-4 font-bold uppercase tracking-widest"
+                      style={{ fontSize: h2FontSize }}
+                    >
+                      {identity.docSubtype}
+                    </p>
+                  )}
+
+                  {/* Teks Tujuan Gelar */}
+                  {identity.degree_purpose && (
+                    <p
+                      className="mx-auto max-w-[85%] leading-relaxed italic"
+                      style={{ fontSize: bodyFontSize }}
+                    >
+                      {identity.degree_purpose}
+                    </p>
+                  )}
                 </div>
 
-                {/* MIDDLE SECTION: Logo Again (as requested) */}
-                <div className="flex flex-col items-center">
-                   {project.wizard.identity.logo && (
+                {/* ── MIDDLE SECTION: Logo Kedua (Center Page) ── */}
+                <div className="flex flex-col items-center py-6">
+                  {identity.logo && (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={project.wizard.identity.logo} alt="Logo Center" className="mx-auto h-32 w-32 object-contain" />
+                    <img
+                      src={identity.logo}
+                      alt="Logo Institusi Center"
+                      className="mx-auto object-contain"
+                      style={{ height: "130px", width: "130px" }}
+                    />
                   )}
                 </div>
 
-                {/* BOTTOM SECTION: Identity + Institution + Year */}
-                <div className="flex flex-col items-center w-full">
-                  <p className="mb-4" style={{ fontSize: bodyFontSize }}>Disusun Oleh:</p>
-                  
-                  <div className="mb-8 flex flex-col items-center">
-                    <p className="font-bold uppercase" style={{ fontSize: h2FontSize }}>
-                      {project.wizard.identity.name || "NAMA MAHASISWA"}
-                    </p>
-                    <p className="font-bold" style={{ fontSize: bodyFontSize }}>
-                      NIM: {project.wizard.identity.nim || "-"}
-                    </p>
+                {/* ── BOTTOM SECTION: Disusun Oleh + Nama + NIM + Institusi + Tahun ── */}
+                <div className="flex w-full flex-col items-center">
+                  <p className="mb-3" style={{ fontSize: bodyFontSize }}>
+                    Disusun Oleh:
+                  </p>
+
+                  {/* Nama & NIM */}
+                  <div className="mb-6 flex flex-col items-center">
+                    {identity.name && (
+                      <p className="font-bold uppercase" style={{ fontSize: h2FontSize }}>
+                        {identity.name}
+                      </p>
+                    )}
+                    {identity.nim && (
+                      <p className="font-bold" style={{ fontSize: bodyFontSize }}>
+                        NIM: {identity.nim}
+                      </p>
+                    )}
                   </div>
 
-                  <div className="flex flex-col items-center font-bold uppercase leading-snug" style={{ fontSize: h2FontSize }}>
-                    <p>PROGRAM STUDI {project.wizard.identity.prodi || "NAMA PRODI"}</p>
-                    <p>FAKULTAS {project.wizard.identity.faculty || "NAMA FAKULTAS"}</p>
-                    <p>{project.wizard.identity.institution || "INSTITUT UMMUL QURO AL-ISLAMI BOGOR"}</p>
-                    <p className="mt-2 normal-case font-bold">
-                      {project.wizard.identity.year || "2026"} / {project.wizard.identity.year_hijri || "1447 H"}
-                    </p>
+                  {/* Prodi + Fakultas + Institusi */}
+                  <div
+                    className="flex flex-col items-center font-bold uppercase leading-relaxed"
+                    style={{ fontSize: bodyFontSize }}
+                  >
+                    {identity.prodi && (
+                      <p>PROGRAM STUDI {identity.prodi}</p>
+                    )}
+                    {identity.faculty && (
+                      <p>FAKULTAS {identity.faculty}</p>
+                    )}
+                    {identity.institution && (
+                      <p>{identity.institution}</p>
+                    )}
                   </div>
-                </div>
 
+                  {/* Tahun Masehi / Hijriah */}
+                  {(identity.year || identity.year_hijri) && (
+                    <p
+                      className="mt-3 font-bold"
+                      style={{ fontSize: bodyFontSize }}
+                    >
+                      {[identity.year, identity.year_hijri].filter(Boolean).join(" / ")}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
-          {/* Page 2: Abstrak (if enabled) */}
+          {/* Page: Abstrak (if enabled) */}
           {fmt.has_abstract && project.abstract_paragraphs && (
             <div
               className="doc-preview relative origin-top overflow-hidden bg-white text-black shadow-xl"
-              style={pageStyle(`${(zoom / 100) * 40}px`)}
+              style={contentPageStyle(`${(zoom / 100) * 40}px`)}
             >
               <h1
                 className="mb-8 whitespace-pre-wrap text-center leading-tight"
@@ -276,7 +350,7 @@ export default function PreviewPage() {
               <div
                 key={chapter.id}
                 className="doc-preview relative origin-top overflow-hidden bg-white text-black shadow-xl"
-                style={pageStyle(`${(zoom / 100) * 40}px`)}
+                style={contentPageStyle(`${(zoom / 100) * 40}px`)}
               >
                 {/* Chapter heading */}
                 <h1
