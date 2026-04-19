@@ -162,6 +162,7 @@ export default function WizardPage() {
           {step === 4 && (
             <Step4Format
               docType={form.docType}
+              chapters={form.chapters}
               value={form.format}
               onChange={(v) => updateForm("format", v)}
               customFormat={form.customFormat}

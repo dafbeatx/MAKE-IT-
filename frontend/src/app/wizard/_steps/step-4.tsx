@@ -166,6 +166,7 @@ function SectionToggle({
 
 interface Props {
   docType: string;
+  chapters?: any[];
   value: string;
   onChange: (v: string) => void;
   customFormat?: CustomFormatConfig;
@@ -174,6 +175,7 @@ interface Props {
 
 export default function Step4Format({
   docType,
+  chapters,
   value,
   onChange,
   customFormat,
@@ -211,6 +213,15 @@ export default function Step4Format({
       onChangeCustom({ ...PRESET_CONFIGS[id] });
     }
   };
+
+  // Dynamic strings from chapters array if available
+  const previewChapterTitle = chapters?.[0]?.name || "Bab I : Pendahuluan";
+  const parts = previewChapterTitle.split(":");
+  const babNum = parts[0]?.trim() || "Bab I";
+  const babName = parts.slice(1).join(":")?.trim() || "";
+  const previewSectionTitle = chapters?.[0]?.sections?.[0]?.title 
+    || (cfg.numbering_system === "standard-indo" ? "A. Latar Belakang" : "1.1 Latar Belakang");
+
 
   return (
     <div className="flex flex-col gap-5">
@@ -654,21 +665,23 @@ export default function Step4Format({
                 }}
                 className="text-foreground"
               >
-                Bab I
+                {babNum}
               </p>
-              <p
-                style={{
-                  fontFamily: cfg.font_name,
-                  fontSize: `${Math.min(cfg.font_size_h1, 18)}px`,
-                  fontWeight: cfg.h1_bold ? 700 : 400,
-                  textAlign: cfg.h1_center ? "center" : "left",
-                  textTransform: cfg.h1_uppercase ? "uppercase" : "none",
-                  lineHeight: cfg.line_spacing,
-                }}
-                className="mb-3 text-foreground"
-              >
-                Pendahuluan
-              </p>
+              {babName && (
+                <p
+                  style={{
+                    fontFamily: cfg.font_name,
+                    fontSize: `${Math.min(cfg.font_size_h1, 18)}px`,
+                    fontWeight: cfg.h1_bold ? 700 : 400,
+                    textAlign: cfg.h1_center ? "center" : "left",
+                    textTransform: cfg.h1_uppercase ? "uppercase" : "none",
+                    lineHeight: cfg.line_spacing,
+                  }}
+                  className="mb-3 text-foreground"
+                >
+                  {babName}
+                </p>
+              )}
 
               {/* Section heading */}
               <p
@@ -678,11 +691,9 @@ export default function Step4Format({
                   fontWeight: cfg.h2_bold ? 700 : 400,
                   lineHeight: cfg.line_spacing,
                 }}
-                className="mb-1 text-foreground"
+                className="mb-1 mt-3 text-foreground"
               >
-                {cfg.numbering_system === "standard-indo"
-                  ? "A. Latar Belakang"
-                  : "1.1 Latar Belakang"}
+                {previewSectionTitle}
               </p>
 
               {/* Body text */}
@@ -700,20 +711,7 @@ export default function Step4Format({
                 eiusmod tempor incididunt ut labore et dolore magna aliqua.
               </p>
 
-              {/* Sub-section */}
-              <p
-                style={{
-                  fontFamily: cfg.font_name,
-                  fontSize: `${Math.min(cfg.font_size_h3, 14)}px`,
-                  fontWeight: cfg.h3_bold ? 700 : 400,
-                  lineHeight: cfg.line_spacing,
-                }}
-                className="mt-2 mb-1 text-foreground"
-              >
-                {cfg.numbering_system === "standard-indo"
-                  ? "a. Sub-pembahasan"
-                  : "1.1.1 Sub-pembahasan"}
-              </p>
+              {/* Sub-section (omitted for cleaner mini preview) */}
               <p
                 style={{
                   fontFamily: cfg.font_name,

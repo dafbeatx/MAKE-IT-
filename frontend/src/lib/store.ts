@@ -77,8 +77,8 @@ export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectS
         })) 
       : [];
 
-    // Jika kosong (yakni bukan skripsi / tipe doc lain), generate otomatis
-    if (sections.length === 0) {
+    // Jika kosong, generate otomatis HANYA JIKA bukan skripsi (karena skripsi full manual)
+    if (sections.length === 0 && wizard.docType !== "skripsi") {
       if (chapNum === 1) {
         sections = [
           { id: "1.1", title: "1.1 Latar Belakang", content: "" },

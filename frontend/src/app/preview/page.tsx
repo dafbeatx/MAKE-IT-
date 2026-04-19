@@ -240,7 +240,7 @@ export default function PreviewPage() {
           )}
 
           {/* Chapters */}
-          {project.chapters.map((chapter, index) => {
+          {project.chapters.map((chapter) => {
             pageCounter++;
             const pageNum = fmt.page_number_body === "roman"
               ? toRoman(pageCounter)
