@@ -43,6 +43,9 @@ const PRESET_CONFIGS: Record<string, CustomFormatConfig> = {
     page_number_body: "arabic",
     numbering_system: "numeric",
     first_line_indent: 1.27,
+    has_quran: false,
+    has_footnote: false,
+    has_abstract: false,
   },
   "standar-c": {
     font_name: "Calibri",
@@ -65,6 +68,9 @@ const PRESET_CONFIGS: Record<string, CustomFormatConfig> = {
     page_number_body: "arabic",
     numbering_system: "numeric",
     first_line_indent: 1.27,
+    has_quran: false,
+    has_footnote: false,
+    has_abstract: false,
   },
 };
 
