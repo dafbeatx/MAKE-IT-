@@ -32,6 +32,16 @@ export interface WizardFormData {
     year: string;
   };
   format: string;
+  customFormat: {
+    font_name: string;
+    font_size_body: number;
+    font_size_heading: number;
+    line_spacing: number;
+    margin_top: number;
+    margin_bottom: number;
+    margin_left: number;
+    margin_right: number;
+  };
 }
 
 const DEFAULT_FORM: WizardFormData = {
@@ -53,6 +63,16 @@ const DEFAULT_FORM: WizardFormData = {
     year: new Date().getFullYear().toString(),
   },
   format: "standar-a",
+  customFormat: {
+    font_name: "Times New Roman",
+    font_size_body: 12,
+    font_size_heading: 14,
+    line_spacing: 1.5,
+    margin_top: 4.0,
+    margin_bottom: 3.0,
+    margin_left: 4.0,
+    margin_right: 3.0,
+  },
 };
 
 export default function WizardPage() {
@@ -154,6 +174,8 @@ export default function WizardPage() {
             <Step4Format
               value={form.format}
               onChange={(v) => updateForm("format", v)}
+              customFormat={form.customFormat}
+              onChangeCustom={(v) => updateForm("customFormat", v)}
             />
           )}
         </div>

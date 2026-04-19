@@ -85,9 +85,29 @@ export default function EditorPage() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
+      const FORMAT_PRESETS: Record<string, any> = {
+        "standar-a": {
+          font_name: "Times New Roman", font_size_body: 12, font_size_heading: 14,
+          line_spacing: 1.5, margin_top: 4.0, margin_bottom: 3.0, margin_left: 4.0, margin_right: 3.0,
+        },
+        "standar-b": {
+          font_name: "Arial", font_size_body: 11, font_size_heading: 12,
+          line_spacing: 1.15, margin_top: 2.54, margin_bottom: 2.54, margin_left: 2.54, margin_right: 2.54,
+        },
+        "standar-c": {
+          font_name: "Calibri", font_size_body: 11, font_size_heading: 13,
+          line_spacing: 1.5, margin_top: 2.5, margin_bottom: 2.5, margin_left: 3.0, margin_right: 2.5,
+        },
+      };
+
+      const formatConfig = project.wizard.format === "custom" 
+        ? project.wizard.customFormat 
+        : (FORMAT_PRESETS[project.wizard.format] || FORMAT_PRESETS["standar-a"]);
+
       const blob = await generateDocument({
         identity: project.wizard.identity,
         chapters: project.chapters,
+        format_config: formatConfig,
       });
       const filename = `MAKEIT_${project.wizard.identity.name.replace(/\s+/g, "_") || "Dokumen"}.docx`;
       downloadBlob(blob, filename);
