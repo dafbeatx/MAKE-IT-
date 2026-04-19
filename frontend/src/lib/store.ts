@@ -65,10 +65,12 @@ export function clearProject() {
 }
 
 export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectStore {
-  const chapters: EditorChapter[] = wizard.chapters.map((ch) => {
+  const chapters: EditorChapter[] = wizard.chapters.map((ch, chIndex) => {
+    const chapNum = chIndex + 1; // Always use sequential number
     let sections: EditorSection[] = ch.sections 
-      ? [...ch.sections].map(s => ({ 
+      ? [...ch.sections].map((s, sIndex) => ({ 
           ...s, 
+          id: `${chapNum}.${sIndex + 1}`,
           content: "",
           quran: "",
           footnote: ""
@@ -77,26 +79,26 @@ export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectS
 
     // Jika kosong (yakni bukan skripsi / tipe doc lain), generate otomatis
     if (sections.length === 0) {
-      if (ch.id === "1") {
+      if (chapNum === 1) {
         sections = [
           { id: "1.1", title: "1.1 Latar Belakang", content: "" },
           { id: "1.2", title: "1.2 Rumusan Masalah", content: "" },
           { id: "1.3", title: "1.3 Tujuan Penelitian", content: "" },
         ];
-      } else if (ch.id === "5") {
+      } else if (chapNum === 5) {
         sections = [
           { id: "5.1", title: "5.1 Kesimpulan", content: "" },
           { id: "5.2", title: "5.2 Saran", content: "" },
         ];
       } else {
         sections = [
-          { id: `${ch.id}.1`, title: `${ch.id}.1 Subjek Pembahasan`, content: "" },
+          { id: `${chapNum}.1`, title: `${chapNum}.1 Subjek Pembahasan`, content: "" },
         ];
       }
     }
 
     return {
-      id: ch.id,
+      id: chapNum.toString(),
       title: ch.name,
       sections,
     };

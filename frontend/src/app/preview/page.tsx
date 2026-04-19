@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download, ZoomIn, ZoomOut, Loader2 } from "lucide-react";
 import { getProject, ProjectStore } from "@/lib/store";
 import { generateDocument, downloadBlob } from "@/lib/api";
+import { DEFAULT_CUSTOM_FORMAT, CustomFormatConfig } from "@/lib/format-types";
 
 export default function PreviewPage() {
   const [project, setProject] = useState<ProjectStore | null>(null);
@@ -40,12 +41,42 @@ export default function PreviewPage() {
   const zoomIn = () => setZoom((z) => Math.min(z + 20, 200));
   const zoomOut = () => setZoom((z) => Math.max(z - 20, 40));
 
+  // ── Resolve format config ──
+  const fmt: CustomFormatConfig = project.wizard.customFormat || DEFAULT_CUSTOM_FORMAT;
+
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
       const blob = await generateDocument({
         identity: project.wizard.identity,
         chapters: project.chapters,
+        format_config: {
+          font_name: fmt.font_name,
+          font_size_body: fmt.font_size_body,
+          font_size_h1: fmt.font_size_h1,
+          font_size_h2: fmt.font_size_h2,
+          font_size_h3: fmt.font_size_h3,
+          font_size_subtitle: fmt.font_size_subtitle,
+          font_size_heading: fmt.font_size_h1,
+          line_spacing: fmt.line_spacing,
+          h1_bold: fmt.h1_bold,
+          h1_uppercase: fmt.h1_uppercase,
+          h1_center: fmt.h1_center,
+          h2_bold: fmt.h2_bold,
+          h3_bold: fmt.h3_bold,
+          margin_top: fmt.margin_top,
+          margin_bottom: fmt.margin_bottom,
+          margin_left: fmt.margin_left,
+          margin_right: fmt.margin_right,
+          page_number_prelim: fmt.page_number_prelim,
+          page_number_body: fmt.page_number_body,
+          numbering_system: fmt.numbering_system,
+          first_line_indent: fmt.first_line_indent,
+          has_quran: fmt.has_quran,
+          has_footnote: fmt.has_footnote,
+          has_abstract: fmt.has_abstract,
+        },
+        abstract_paragraphs: project.abstract_paragraphs,
       });
       const filename = `MAKEIT_${project.wizard.identity.name.replace(/\s+/g, "_") || "Dokumen"}.docx`;
       downloadBlob(blob, filename);
@@ -56,6 +87,24 @@ export default function PreviewPage() {
       setIsGenerating(false);
     }
   };
+
+  // ── Page style derived from wizard format ──
+  const pageStyle = (extraMarginTop?: string) => ({
+    width: `${(210 / 25.4) * 96}px`,
+    minHeight: `${(297 / 25.4) * 96}px`,
+    transform: `scale(${zoom / 100})`,
+    transformOrigin: "top center" as const,
+    padding: `${Math.round(fmt.margin_top * 37.8)}px ${Math.round(fmt.margin_right * 37.8)}px ${Math.round(fmt.margin_bottom * 37.8)}px ${Math.round(fmt.margin_left * 37.8)}px`,
+    fontFamily: `'${fmt.font_name}', Times, serif`,
+    marginTop: extraMarginTop || "0",
+  });
+
+  const bodyFontSize = `${fmt.font_size_body}pt`;
+  const h1FontSize = `${fmt.font_size_h1}pt`;
+  const h2FontSize = `${fmt.font_size_h2}pt`;
+
+  // ── Count pages for numbering ──
+  let pageCounter = 1; // Cover is page 1
 
   return (
     <div className="flex min-h-dvh flex-col bg-gray-200 dark:bg-gray-900">
@@ -113,84 +162,167 @@ export default function PreviewPage() {
           {/* Page 1: Cover */}
           <div
             className="doc-preview origin-top overflow-hidden bg-white text-black shadow-xl"
-            style={{
-              width: `${(210 / 25.4) * 96}px`,
-              minHeight: `${(297 / 25.4) * 96}px`,
-              transform: `scale(${zoom / 100})`,
-              transformOrigin: "top center",
-              padding: "151px 113px 113px 151px",
-              fontFamily: "'Times New Roman', Times, serif",
-            }}
+            style={pageStyle()}
           >
             <div className="flex h-full flex-col items-center text-center">
-              <p className="mb-12 text-[14pt] font-bold leading-tight uppercase">
+              <p className="mb-12 font-bold leading-tight uppercase" style={{ fontSize: h1FontSize }}>
                 {project.wizard.identity.title || "JUDUL DOKUMEN BELUM DIISI"}
               </p>
 
-              <p className="mb-24 text-[12pt] uppercase">{project.wizard.docType || "SKRIPSI"}</p>
+              <p className="mb-24 uppercase" style={{ fontSize: bodyFontSize }}>
+                {project.wizard.docType || "SKRIPSI"}
+              </p>
 
               <div className="mx-auto mb-24 flex h-24 w-24 items-center justify-center rounded-lg border-2 border-gray-300 text-[10pt] text-gray-400">
                 Logo Institusi
               </div>
 
-              <p className="mb-2 text-[12pt]">Disusun oleh:</p>
-              <p className="mb-1 text-[12pt] font-bold uppercase">{project.wizard.identity.name || "NAMA MAHASISWA"}</p>
-              <p className="mb-14 text-[12pt]">NIM: {project.wizard.identity.nim || "-"}</p>
+              <p className="mb-2" style={{ fontSize: bodyFontSize }}>Disusun oleh:</p>
+              <p className="mb-1 font-bold uppercase" style={{ fontSize: bodyFontSize }}>
+                {project.wizard.identity.name || "NAMA MAHASISWA"}
+              </p>
+              <p className="mb-14" style={{ fontSize: bodyFontSize }}>
+                NIM: {project.wizard.identity.nim || "-"}
+              </p>
 
-              <p className="mb-1 text-[12pt] font-bold uppercase">
+              <p className="mb-1 font-bold uppercase" style={{ fontSize: bodyFontSize }}>
                 {project.wizard.identity.faculty || "FAKULTAS"}
               </p>
-              <p className="mb-1 text-[12pt] font-bold uppercase">
+              <p className="mb-1 font-bold uppercase" style={{ fontSize: bodyFontSize }}>
                 {project.wizard.identity.institution || "UNIVERSITAS"}
               </p>
-              <p className="text-[12pt] font-bold">{project.wizard.identity.year || "2024"}</p>
+              <p className="font-bold" style={{ fontSize: bodyFontSize }}>
+                {project.wizard.identity.year || "2024"}
+              </p>
             </div>
           </div>
 
-          {/* Chapters */}
-          {project.chapters.map((chapter, index) => (
+          {/* Page 2: Abstrak (if enabled) */}
+          {fmt.has_abstract && project.abstract_paragraphs && (
             <div
-              key={chapter.id}
               className="doc-preview relative origin-top overflow-hidden bg-white text-black shadow-xl"
-              style={{
-                width: `${(210 / 25.4) * 96}px`,
-                minHeight: `${(297 / 25.4) * 96}px`,
-                transform: `scale(${zoom / 100})`,
-                transformOrigin: "top center",
-                padding: "151px 113px 113px 151px",
-                fontFamily: "'Times New Roman', Times, serif",
-                marginTop: index === 0 ? "0" : `${(zoom / 100) * 40}px`,
-              }}
+              style={pageStyle(`${(zoom / 100) * 40}px`)}
             >
-              <h1 className="mb-10 whitespace-pre-wrap text-center text-[14pt] font-bold leading-tight uppercase">
-                {chapter.title.replace(": ", "\n")}
+              <h1
+                className="mb-8 whitespace-pre-wrap text-center leading-tight"
+                style={{
+                  fontSize: h1FontSize,
+                  fontWeight: fmt.h1_bold ? "bold" : "normal",
+                  textTransform: fmt.h1_uppercase ? "uppercase" : "none",
+                  textAlign: fmt.h1_center ? "center" : "left",
+                }}
+              >
+                ABSTRAK
               </h1>
 
-              {chapter.sections.map((section) => (
-                <div key={section.id} className="mb-6">
-                  <h2 className="mb-3 text-[12pt] font-bold">{section.title}</h2>
-                  <div className="text-justify text-[12pt] leading-normal">
-                    {section.content ? (
-                      section.content.split("\n").map((para, i) => (
-                        para.trim() && (
-                          <p key={i} className="mb-4 indent-[1.27cm]">
-                            {para.trim()}
-                          </p>
-                        )
-                      ))
-                    ) : (
-                      <p className="text-gray-300 italic">Belum ada konten untuk bagian ini...</p>
-                    )}
-                  </div>
-                </div>
-              ))}
+              <div style={{ fontSize: bodyFontSize, lineHeight: fmt.line_spacing }}>
+                {project.abstract_paragraphs.map((para, i) => (
+                  para.trim() ? (
+                    <p
+                      key={`abs-${i}`}
+                      className="mb-4 text-justify"
+                      style={{ textIndent: `${fmt.first_line_indent}cm` }}
+                    >
+                      {para.trim()}
+                    </p>
+                  ) : null
+                ))}
+                {project.abstract_paragraphs.every(p => !p.trim()) && (
+                  <p className="text-gray-300 italic">Abstrak belum diisi...</p>
+                )}
+              </div>
 
-              {/* Page Number mockup */}
-              <div className="absolute bottom-[56px] right-[113px] text-[12pt]">
-                {index + 2}
+              {/* Page Number */}
+              <div className="absolute bottom-[56px] right-[113px]" style={{ fontSize: bodyFontSize }}>
+                {fmt.page_number_prelim === "roman" ? "ii" : fmt.page_number_prelim === "arabic" ? "2" : ""}
               </div>
             </div>
-          ))}
+          )}
+
+          {/* Chapters */}
+          {project.chapters.map((chapter, index) => {
+            pageCounter++;
+            const pageNum = fmt.page_number_body === "roman"
+              ? toRoman(pageCounter)
+              : pageCounter.toString();
+
+            return (
+              <div
+                key={chapter.id}
+                className="doc-preview relative origin-top overflow-hidden bg-white text-black shadow-xl"
+                style={pageStyle(`${(zoom / 100) * 40}px`)}
+              >
+                {/* Chapter heading */}
+                <h1
+                  className="mb-8 whitespace-pre-wrap leading-tight"
+                  style={{
+                    fontSize: h1FontSize,
+                    fontWeight: fmt.h1_bold ? "bold" : "normal",
+                    textTransform: fmt.h1_uppercase ? "uppercase" : "none",
+                    textAlign: fmt.h1_center ? "center" : "left",
+                  }}
+                >
+                  {chapter.title.replace(": ", "\n")}
+                </h1>
+
+                {chapter.sections.map((section) => (
+                  <div key={section.id} className="mb-6">
+                    <h2
+                      className="mb-3"
+                      style={{
+                        fontSize: h2FontSize,
+                        fontWeight: fmt.h2_bold ? "bold" : "normal",
+                      }}
+                    >
+                      {section.title}
+                    </h2>
+                    <div
+                      className="text-justify"
+                      style={{
+                        fontSize: bodyFontSize,
+                        lineHeight: fmt.line_spacing,
+                      }}
+                    >
+                      {section.content ? (
+                        section.content.split("\n").map((para, i) =>
+                          para.trim() ? (
+                            <p
+                              key={i}
+                              className="mb-4"
+                              style={{ textIndent: `${fmt.first_line_indent}cm` }}
+                            >
+                              {para.trim()}
+                            </p>
+                          ) : null
+                        )
+                      ) : (
+                        <p className="text-gray-300 italic">Belum ada konten untuk bagian ini...</p>
+                      )}
+                    </div>
+
+                    {/* Quran (RTL) */}
+                    {fmt.has_quran && section.quran?.trim() && (
+                      <div className="my-4" dir="rtl" style={{ textAlign: "right", fontSize: `${fmt.font_size_body + 6}pt`, lineHeight: "2" }}>
+                        {section.quran.trim()}
+                      </div>
+                    )}
+
+                    {/* Footnote */}
+                    {fmt.has_footnote && section.footnote?.trim() && (
+                      <div className="mt-3 border-t border-gray-400 pt-2" style={{ fontSize: "10pt" }}>
+                        {section.footnote.trim()}
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                {/* Page Number */}
+                <div className="absolute bottom-[56px] right-[113px]" style={{ fontSize: bodyFontSize }}>
+                  {pageNum}
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* Spacer for mobile bottom bar */}
@@ -215,4 +347,18 @@ export default function PreviewPage() {
       </div>
     </div>
   );
+}
+
+// ── Roman numeral helper ──
+function toRoman(num: number): string {
+  const values = [1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1];
+  const literals = ["M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"];
+  let result = "";
+  for (let i = 0; i < values.length; i++) {
+    while (num >= values[i]) {
+      result += literals[i];
+      num -= values[i];
+    }
+  }
+  return result;
 }

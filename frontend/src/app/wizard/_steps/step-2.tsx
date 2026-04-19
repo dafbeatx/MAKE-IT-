@@ -62,8 +62,9 @@ export default function Step2Sistematika({ chapters, onChange }: Props) {
   };
 
   const addChapter = () => {
-    const newId = Date.now().toString();
-    onChange([...chapters, { id: newId, name: `Bab ${chapters.length + 1}: Judul Bab Baru`, sections: [] }]);
+    const nextNum = chapters.length + 1;
+    const newId = nextNum.toString();
+    onChange([...chapters, { id: newId, name: `Bab ${nextNum}: Judul Bab Baru`, sections: [] }]);
   };
 
   const removeChapter = (id: string) => {
@@ -88,7 +89,10 @@ export default function Step2Sistematika({ chapters, onChange }: Props) {
     onChange(
       chapters.map((c) => {
         if (c.id === chapId) {
-          const newSec = { id: Date.now().toString(), title: "Subbab Baru" };
+          const chapIdx = chapters.indexOf(c) + 1;
+          const nextSecNum = (c.sections?.length || 0) + 1;
+          const secId = `${chapIdx}.${nextSecNum}`;
+          const newSec = { id: secId, title: `Subbab Baru` };
           return { ...c, sections: [...(c.sections || []), newSec] };
         }
         return c;
