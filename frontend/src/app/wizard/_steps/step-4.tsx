@@ -58,7 +58,7 @@ interface Props {
 export default function Step4Format({ value, onChange, customFormat, onChangeCustom }: Props) {
   const isCustom = value === "custom";
 
-  const updateCustom = (field: keyof CustomFormat, val: any) => {
+  const updateCustom = (field: keyof CustomFormat, val: CustomFormat[keyof CustomFormat]) => {
     if (!customFormat || !onChangeCustom) return;
     onChangeCustom({ ...customFormat, [field]: val });
   };

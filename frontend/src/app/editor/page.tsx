@@ -85,7 +85,16 @@ export default function EditorPage() {
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const FORMAT_PRESETS: Record<string, any> = {
+      const FORMAT_PRESETS: Record<string, {
+        font_name: string;
+        font_size_body: number;
+        font_size_heading: number;
+        line_spacing: number;
+        margin_top: number;
+        margin_bottom: number;
+        margin_left: number;
+        margin_right: number;
+      }> = {
         "standar-a": {
           font_name: "Times New Roman", font_size_body: 12, font_size_heading: 14,
           line_spacing: 1.5, margin_top: 4.0, margin_bottom: 3.0, margin_left: 4.0, margin_right: 3.0,
