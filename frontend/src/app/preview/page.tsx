@@ -104,7 +104,9 @@ export default function PreviewPage() {
   // Cover page uses its own internal padding matching the margins
   const coverPageStyle = () => ({
     ...pageStyle(),
+    height: "297mm",
     padding: `${Math.round(fmt.margin_top * 37.8)}px ${Math.round(fmt.margin_right * 37.8)}px ${Math.round(fmt.margin_bottom * 37.8)}px ${Math.round(fmt.margin_left * 37.8)}px`,
+    boxSizing: "border-box" as const,
   });
 
   // Content pages have standard academic margin padding
@@ -200,102 +202,107 @@ export default function PreviewPage() {
               style={coverPageStyle()}
             >
               <div
-                className="flex flex-col items-center justify-between text-center"
-                style={{
-                  fontFamily: `'${fmt.font_name}', Times, serif`,
-                  minHeight: `calc(${(297 / 25.4) * 96}px - ${Math.round(fmt.margin_top * 37.8)}px - ${Math.round(fmt.margin_bottom * 37.8)}px)`,
-                }}
+                className="flex h-full flex-col items-center justify-between text-center leading-tight"
+                style={{ fontFamily: `'${fmt.font_name}', Times, serif` }}
               >
-                {/* ── TOP SECTION: Judul → Subtype → Degree Purpose ── */}
-                <div className="flex w-full flex-col items-center pt-4">
-                  {/* 1. Judul Skripsi */}
-                  {identity.title && (
-                    <p
-                      className="mb-4 px-4 leading-snug"
-                      style={{
-                        fontSize: h1FontSize,
-                        fontWeight: fmt.h1_bold ? "bold" : "normal",
-                        textTransform: fmt.h1_uppercase ? "uppercase" : "none",
-                      }}
-                    >
-                      {renderMarkdown(identity.title)}
-                    </p>
-                  )}
+                {/* ── TOP SECTION: Judul + Subtype + Degree Purpose ── */}
+                <div className="flex w-full flex-col items-center space-y-8 pt-6">
+                  <div className="w-full space-y-4 px-4">
+                    {/* 1. Judul Skripsi */}
+                    {identity.title && (
+                      <h1
+                        className="leading-tight"
+                        style={{
+                          fontSize: h1FontSize,
+                          fontWeight: fmt.h1_bold ? "bold" : "normal",
+                          textTransform: fmt.h1_uppercase ? "uppercase" : "none",
+                        }}
+                      >
+                        {renderMarkdown(identity.title)}
+                      </h1>
+                    )}
 
-                  {/* 2. Jenis Dokumen (SKRIPSI / SEMINAR HASIL / dll) */}
-                  {identity.docSubtype && (
-                    <p
-                      className="mb-4 tracking-[0.2em]"
-                      style={{
-                        fontSize: h2FontSize,
-                        fontWeight: fmt.h2_bold ? "bold" : "normal",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {renderMarkdown(identity.docSubtype)}
-                    </p>
-                  )}
+                    {/* 2. Jenis Dokumen */}
+                    {identity.docSubtype && (
+                      <p
+                        className="tracking-[0.2em]"
+                        style={{
+                          fontSize: h2FontSize,
+                          fontWeight: fmt.h2_bold ? "bold" : "normal",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {renderMarkdown(identity.docSubtype)}
+                      </p>
+                    )}
+                  </div>
 
                   {/* 3. Teks Tujuan Gelar */}
                   {identity.degree_purpose && (
                     <p
-                      className="mx-auto max-w-[80%] leading-relaxed italic"
-                      style={{ fontSize: bodyFontSize }}
+                      className="mx-auto max-w-[85%] italic"
+                      style={{ fontSize: bodyFontSize, lineHeight: "1.5" }}
                     >
                       {identity.degree_purpose}
                     </p>
                   )}
                 </div>
 
-                {/* ── MIDDLE SECTION: Logo & Penulis ── */}
-                <div className="flex flex-col items-center py-2">
+                {/* ── MIDDLE SECTION: Logo & Author ── */}
+                <div className="flex flex-col items-center space-y-12 py-10">
                   {identity.logo && (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={identity.logo}
                       alt="Logo Institusi"
-                      className="mx-auto mb-4 object-contain"
-                      style={{ height: "5cm", width: "5cm", marginBottom: "1.5rem" }}
+                      className="object-contain"
+                      style={{ height: "5.5cm", width: "5.5cm" }}
                     />
                   )}
 
-                  {/* Disusun Oleh → Nama → NIM */}
-                  <div className="flex w-full flex-col items-center">
-                    <p className="mb-1" style={{ fontSize: bodyFontSize }}>
-                      Disusun oleh :
-                    </p>
-                    {identity.name && (
-                      <p style={{ fontSize: bodyFontSize }}>
-                        {identity.name}
-                      </p>
-                    )}
-                    {identity.nim && (
-                      <p style={{ fontSize: bodyFontSize }}>
-                        {identity.nim}
-                      </p>
-                    )}
+                  {/* Author Details */}
+                  <div className="space-y-4">
+                    <div className="space-y-1">
+                      <p style={{ fontSize: bodyFontSize }}>Disusun oleh :</p>
+                      <div className="space-y-1">
+                        {identity.name && (
+                          <p className="font-bold" style={{ fontSize: bodyFontSize }}>
+                            {identity.name}
+                          </p>
+                        )}
+                        {identity.nim && (
+                          <p style={{ fontSize: bodyFontSize }}>
+                            {identity.nim}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {/* ── BOTTOM SECTION: Institusi → Alamat → Tahun ── */}
-                <div className="flex w-full flex-col items-center pb-2">
-                  {/* 8. Prodi + Fakultas + Institusi */}
+                {/* ── BOTTOM SECTION: Institution & Year ── */}
+                <div className="flex w-full flex-col items-center space-y-6 pb-10">
                   <div
-                    className="flex flex-col items-center font-bold uppercase"
+                    className="flex flex-col items-center font-bold uppercase space-y-2"
                     style={{ fontSize: bodyFontSize, lineHeight: "1.2" }}
                   >
                     {identity.prodi && <p>{identity.prodi}</p>}
                     {identity.faculty && <p>{identity.faculty}</p>}
                     {identity.institution && <p>{identity.institution}</p>}
-                    {identity.address && <p>{identity.address}</p>}
                   </div>
 
-                  {/* 10. Tahun Masehi / Hijriah */}
-                  {(identity.year || identity.year_hijri) && (
-                    <p className="mt-1 font-bold" style={{ fontSize: bodyFontSize, lineHeight: "1.2" }}>
-                      {[identity.year, identity.year_hijri].filter(Boolean).join(" / ")}
-                    </p>
-                  )}
+                  <div className="space-y-1">
+                    {identity.address && (
+                      <p className="text-[11px] uppercase tracking-wide opacity-80" style={{ fontSize: "10pt" }}>
+                        {identity.address}
+                      </p>
+                    )}
+                    {(identity.year || identity.year_hijri) && (
+                      <p className="font-bold" style={{ fontSize: bodyFontSize }}>
+                        {[identity.year, identity.year_hijri].filter(Boolean).join(" / ")}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
