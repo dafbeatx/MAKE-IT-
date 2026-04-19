@@ -27,16 +27,18 @@ export const DefaultProject: WizardFormData = {
 };
 
 // State specifically for the Editor which has sections and content
+export interface EditorSection {
+  id: string;
+  title: string;
+  content: string;
+  quran?: string;
+  footnote?: string;
+}
+
 export interface EditorChapter {
   id: string;
   title: string;
-  sections: {
-    id: string;
-    title: string;
-    content: string;
-    quran?: string;
-    footnote?: string;
-  }[];
+  sections: EditorSection[];
 }
 
 export interface ProjectStore {
@@ -64,7 +66,7 @@ export function clearProject() {
 
 export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectStore {
   const chapters: EditorChapter[] = wizard.chapters.map((ch) => {
-    let sections = ch.sections 
+    let sections: EditorSection[] = ch.sections 
       ? [...ch.sections].map(s => ({ 
           ...s, 
           content: "",
