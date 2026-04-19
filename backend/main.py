@@ -164,42 +164,43 @@ def build_document(req: GenerateRequest) -> Document:
             except Exception as e:
                 print("Failed to decode logo:", e)
 
-        # 1. Top Logo
-        _add_logo(1.2)
-
-        # 2. Judul Skripsi (from user data)
+        # 1. Judul Skripsi (from user data)
         if req.identity.title:
+            title_text = req.identity.title
+            if fmt.h1_uppercase:
+                title_text = title_text.upper()
+                
             _add_centered_line(
-                req.identity.title.upper(),
+                title_text,
                 fmt.h1_size,
-                bold=True,
-                spacing_after=6,
+                bold=fmt.h1_bold,
+                spacing_after=12,
             )
 
-        # 3. Doc Subtype (SKRIPSI / SEMINAR HASIL / etc.)
+        # 2. Doc Subtype (SKRIPSI / SEMINAR HASIL / etc.)
         if req.identity.docSubtype:
             _add_centered_line(
                 req.identity.docSubtype.upper(),
-                fmt.font_size_body,
-                bold=True,
-                spacing_after=6,
+                fmt.h2_size,
+                bold=fmt.h2_bold,
+                spacing_after=12,
             )
 
         doc.add_paragraph("")
 
-        # 4. Degree Purpose Text
+        # 3. Degree Purpose Text
         if req.identity.degree_purpose:
             _add_centered_line(
                 req.identity.degree_purpose,
                 fmt.font_size_body,
-                italic=True,
+                italic=False,
             )
 
-        for _ in range(2):
+        for _ in range(3):
             doc.add_paragraph("")
 
-        # 5. Middle Logo (large, centered)
-        _add_logo(1.8)
+        # 4. Middle Logo (large, centered)
+        _add_logo(2.2)
 
         for _ in range(2):
             doc.add_paragraph("")

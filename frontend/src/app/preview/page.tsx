@@ -184,30 +184,23 @@ export default function PreviewPage() {
               style={coverPageStyle()}
             >
               <div
-                className="flex flex-col items-center justify-between text-center"
+                className="flex flex-col items-center justify-between text-center pb-8 pt-2"
                 style={{
                   fontFamily: `'${fmt.font_name}', Times, serif`,
                   minHeight: `calc(${(297 / 25.4) * 96}px - ${Math.round(fmt.margin_top * 37.8)}px - ${Math.round(fmt.margin_bottom * 37.8)}px)`,
                 }}
               >
-                {/* ── TOP SECTION: Logo + Judul + SubType + Degree Purpose ── */}
+                {/* ── TOP SECTION: Judul + SubType + Degree Purpose ── */}
                 <div className="flex w-full flex-col items-center">
-                  {/* Logo Atas */}
-                  {identity.logo && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={identity.logo}
-                      alt="Logo Institusi"
-                      className="mx-auto mb-6 object-contain"
-                      style={{ height: "100px", width: "100px" }}
-                    />
-                  )}
-
                   {/* Judul Skripsi — dari data Step 3 */}
                   {identity.title && (
                     <p
-                      className="mb-4 font-bold uppercase leading-snug"
-                      style={{ fontSize: h1FontSize }}
+                      className="mb-6 leading-snug px-6"
+                      style={{
+                        fontSize: h1FontSize,
+                        fontWeight: fmt.h1_bold ? "bold" : "normal",
+                        textTransform: fmt.h1_uppercase ? "uppercase" : "none",
+                      }}
                     >
                       {identity.title}
                     </p>
@@ -216,8 +209,12 @@ export default function PreviewPage() {
                   {/* Jenis Dokumen (SKRIPSI / SEMINAR HASIL / dll) */}
                   {(identity.docSubtype) && (
                     <p
-                      className="mb-4 font-bold uppercase tracking-widest"
-                      style={{ fontSize: h2FontSize }}
+                      className="mb-6 tracking-widest"
+                      style={{
+                        fontSize: h2FontSize,
+                        fontWeight: fmt.h2_bold ? "bold" : "normal",
+                        textTransform: "uppercase",
+                      }}
                     >
                       {identity.docSubtype}
                     </p>
@@ -226,7 +223,7 @@ export default function PreviewPage() {
                   {/* Teks Tujuan Gelar */}
                   {identity.degree_purpose && (
                     <p
-                      className="mx-auto max-w-[85%] leading-relaxed italic"
+                      className="mx-auto max-w-[80%] leading-relaxed"
                       style={{ fontSize: bodyFontSize }}
                     >
                       {identity.degree_purpose}
@@ -242,7 +239,7 @@ export default function PreviewPage() {
                       src={identity.logo}
                       alt="Logo Institusi Center"
                       className="mx-auto object-contain"
-                      style={{ height: "130px", width: "130px" }}
+                      style={{ height: "180px", width: "180px" }}
                     />
                   )}
                 </div>
