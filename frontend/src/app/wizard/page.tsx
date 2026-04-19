@@ -65,7 +65,7 @@ export default function WizardPage() {
   const updateForm = useCallback(
     <K extends keyof WizardFormData>(key: K, value: WizardFormData[K]) => {
       setForm((prev) => {
-        let newState = { ...prev, [key]: value };
+        const newState = { ...prev, [key]: value };
         
         // Wipe state clean if user switches to "skripsi"
         if (key === "docType" && value === "skripsi" && prev.docType !== "skripsi") {

@@ -72,6 +72,7 @@ export default function Step3Identitas({ value, onChange, hasCover }: Props) {
             </div>
             {value.logo && (
               <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-lg border bg-white p-1 shadow-sm sm:h-20 sm:w-20">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={value.logo} alt="Logo" className="max-h-full max-w-full object-contain" />
               </div>
             )}

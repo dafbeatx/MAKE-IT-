@@ -171,6 +171,7 @@ export default function PreviewPage() {
                 {/* TOP SECTION: Logo + Title + Subtype + Purpose */}
                 <div className="flex flex-col items-center w-full">
                   {project.wizard.identity.logo && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={project.wizard.identity.logo} alt="Logo" className="mx-auto mb-8 h-28 w-28 object-contain" />
                   )}
                   
@@ -190,6 +191,7 @@ export default function PreviewPage() {
                 {/* MIDDLE SECTION: Logo Again (as requested) */}
                 <div className="flex flex-col items-center">
                    {project.wizard.identity.logo && (
+                    /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={project.wizard.identity.logo} alt="Logo Center" className="mx-auto h-32 w-32 object-contain" />
                   )}
                 </div>
