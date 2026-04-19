@@ -231,43 +231,38 @@ export default function PreviewPage() {
                   )}
                 </div>
 
-                {/* ── MIDDLE SECTION: Logo (satu-satunya, center page) ── */}
-                <div className="flex flex-col items-center py-4">
+                {/* ── MIDDLE SECTION: Logo & Penulis ── */}
+                <div className="flex flex-col items-center py-2">
                   {identity.logo && (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={identity.logo}
                       alt="Logo Institusi"
-                      className="mx-auto object-contain"
-                      style={{ height: "140px", width: "140px" }}
+                      className="mx-auto mb-4 object-contain"
+                      style={{ height: "5cm", width: "5cm", marginBottom: "1.5rem" }}
                     />
                   )}
+
+                  {/* Disusun Oleh → Nama → NIM */}
+                  <div className="flex w-full flex-col items-center">
+                    <p className="mb-1" style={{ fontSize: bodyFontSize }}>
+                      Disusun oleh :
+                    </p>
+                    {identity.name && (
+                      <p style={{ fontSize: bodyFontSize }}>
+                        {identity.name}
+                      </p>
+                    )}
+                    {identity.nim && (
+                      <p style={{ fontSize: bodyFontSize }}>
+                        {identity.nim}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                {/* ── BOTTOM SECTION: Disusun Oleh → Nama → NIM → Institusi → Alamat → Tahun ── */}
+                {/* ── BOTTOM SECTION: Institusi → Alamat → Tahun ── */}
                 <div className="flex w-full flex-col items-center pb-2">
-                  {/* 5. Disusun Oleh: */}
-                  <p className="mb-2" style={{ fontSize: bodyFontSize }}>
-                    Disusun Oleh:
-                  </p>
-
-                  {/* 6. Nama */}
-                  {identity.name && (
-                    <p
-                      className="font-bold uppercase"
-                      style={{ fontSize: bodyFontSize }}
-                    >
-                      {identity.name}
-                    </p>
-                  )}
-
-                  {/* 7. NIM */}
-                  {identity.nim && (
-                    <p className="mb-4 font-bold" style={{ fontSize: bodyFontSize }}>
-                      NIM: {identity.nim}
-                    </p>
-                  )}
-
                   {/* 8. Prodi + Fakultas + Institusi */}
                   <div
                     className="flex flex-col items-center font-bold uppercase leading-relaxed"

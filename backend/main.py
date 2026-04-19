@@ -197,26 +197,26 @@ def build_document(req: GenerateRequest) -> Document:
                 italic=True,
             )
 
-        for _ in range(3):
+        for _ in range(2):
             doc.add_paragraph("")
 
-        # 4. Middle Logo (single, large, centered)
-        _add_logo(1.8)
+        # 4. Middle Logo (single, large, centered - 5x5cm = 1.97 inches)
+        _add_logo(1.97)
 
-        for _ in range(3):
+        for _ in range(1):
             doc.add_paragraph("")
 
         # 5. "Disusun Oleh:"
-        _add_centered_line("Disusun Oleh:", fmt.font_size_body)
+        _add_centered_line("Disusun oleh :", fmt.font_size_body)
 
         # 6. Name & NIM
         if req.identity.name:
-            _add_centered_line(req.identity.name.upper(), fmt.font_size_body, bold=True)
+            _add_centered_line(req.identity.name, fmt.font_size_body, bold=False)
 
         if req.identity.nim:
-            _add_centered_line(f"NIM: {req.identity.nim}", fmt.font_size_body, bold=True)
+            _add_centered_line(req.identity.nim, fmt.font_size_body, bold=False)
 
-        for _ in range(2):
+        for _ in range(4):
             doc.add_paragraph("")
 
         # 7. Institution block (Prodi → Fakultas → Institusi)
