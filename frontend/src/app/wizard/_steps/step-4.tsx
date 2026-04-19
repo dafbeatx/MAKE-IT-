@@ -165,6 +165,7 @@ function SectionToggle({
 // ── Main Component ──────────────────────────────────────
 
 interface Props {
+  docType: string;
   value: string;
   onChange: (v: string) => void;
   customFormat?: CustomFormatConfig;
@@ -172,6 +173,7 @@ interface Props {
 }
 
 export default function Step4Format({
+  docType,
   value,
   onChange,
   customFormat,
