@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ArrowLeft, ArrowRight, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
-import { saveProject, createInitialProjectFromWizard } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import { DEFAULT_CUSTOM_FORMAT } from "@/lib/format-types";
 import type { WizardFormData } from "@/lib/format-types";
 import { wizardValidation } from "@/lib/validations";
@@ -54,7 +54,7 @@ const DEFAULT_FORM: WizardFormData = {
   customFormat: { ...DEFAULT_CUSTOM_FORMAT },
 };
 
-import { useStore, createInitialProjectFromWizard } from "@/lib/store";
+
 
 export default function WizardPage() {
   const [step, setStep] = useState(1);
@@ -63,9 +63,13 @@ export default function WizardPage() {
   const form = useStore((state) => state.wizard);
   const setWizard = useStore((state) => state.setWizard);
   const setProject = useStore((state) => state.setProject);
+  const createProject = useStore((state) => state.createInitialProjectFromWizard);
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
   }, []);
 
   const pct = (step / STEPS.length) * 100;
@@ -74,14 +78,14 @@ export default function WizardPage() {
     if (step === 2) {
       const result = wizardValidation.validateStep2(form.chapters);
       if (!result.success) {
-        alert("Validasi Gagal: " + result.error.errors[0].message);
+        alert("Validasi Gagal: " + result.error.issues[0].message);
         return;
       }
     } else if (step === 3 && form.hasCover) {
       const result = wizardValidation.validateStep3(form.identity);
       if (!result.success) {
-        const errors = result.error.errors.map(e => e.message).join("\n- ");
-        alert("Periksa kembali form Identitas:\n- " + errors);
+        const errorMessages = result.error.issues.map((issue) => issue.message).join("\n- ");
+        alert("Periksa kembali form Identitas:\n- " + errorMessages);
         return;
       }
     }
@@ -92,31 +96,31 @@ export default function WizardPage() {
 
   const updateForm = useCallback(
     <K extends keyof WizardFormData>(key: K, value: WizardFormData[K]) => {
-      const prev = useStore.getState().wizard;
+      const prevWizard = useStore.getState().wizard;
       const newState: Partial<WizardFormData> = { [key]: value };
       
       // Wipe state clean if user switches to "skripsi"
-      if (key === "docType" && value === "skripsi" && prev.docType !== "skripsi") {
+      if (key === "docType" && value === "skripsi" && prevWizard.docType !== "skripsi") {
         newState.hasCover = false;
         newState.chapters = [];
         newState.identity = {
           title: "", docSubtype: "", name: "", nim: "", institution: "", faculty: "", prodi: "", supervisor: "", year: "", year_hijri: "", degree_purpose: "Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan", logo: ""
         };
         newState.format = "custom"; // Force strictly manual format
-      } else if (key === "docType" && value !== "skripsi" && prev.docType === "skripsi") {
+      } else if (key === "docType" && value !== "skripsi" && prevWizard.docType === "skripsi") {
         // Restore basic layout for other docs
         newState.chapters = DEFAULT_FORM.chapters;
         newState.format = "standar-a";
       }
 
-      setWizard(newState as any);
+      setWizard(newState);
     },
     [setWizard]
   );
 
   const handleFinish = () => {
     // Save to the store so the editor component can pick it up
-    const project = createInitialProjectFromWizard(form);
+    const project = createProject(form);
     setProject(project);
   };
 

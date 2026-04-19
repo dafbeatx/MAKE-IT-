@@ -16,11 +16,14 @@ export const chapterSchema = z.array(
   })
 ).min(1, "Minimal harus ada 1 bab");
 
+export type IdentityInput = z.infer<typeof identitySchema>;
+export type ChapterInput = z.infer<typeof chapterSchema>;
+
 export const wizardValidation = {
-  validateStep2: (chapters: any[]) => {
+  validateStep2: (chapters: unknown) => {
     return chapterSchema.safeParse(chapters);
   },
-  validateStep3: (identity: any) => {
+  validateStep3: (identity: unknown) => {
     return identitySchema.safeParse(identity);
   }
 };

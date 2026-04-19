@@ -50,50 +50,6 @@ export interface ProjectStore {
   lastUpdated: string;
 }
 
-export interface AppStore extends ProjectStore {
-  setWizard: (data: Partial<WizardFormData>) => void;
-  setChapters: (chapters: EditorChapter[]) => void;
-  setProject: (data: ProjectStore) => void;
-  clearProject: () => void;
-}
-
-const defaultStoreData: ProjectStore = {
-  wizard: DefaultProject,
-  chapters: [],
-  abstract_paragraphs: undefined,
-  lastUpdated: new Date().toISOString(),
-};
-
-export const useStore = create<AppStore>()(
-  persist(
-    (set) => ({
-      ...defaultStoreData,
-      setWizard: (data) => set((state) => ({ wizard: { ...state.wizard, ...data } })),
-      setChapters: (chapters) => set({ chapters }),
-      setProject: (data) => set({ ...data }),
-      clearProject: () => set({ ...defaultStoreData }),
-    }),
-    {
-      name: STORAGE_KEY,
-    }
-  )
-);
-
-// Fallback legacy functions pointing to Zustand for backward compatibility without breaking components instantly
-export function saveProject(data: ProjectStore) {
-  useStore.getState().setProject(data);
-}
-
-export function getProject(): ProjectStore | null {
-  const state = useStore.getState();
-  if (!state.chapters.length) return null;
-  return state;
-}
-
-export function clearProject() {
-  useStore.getState().clearProject();
-}
-
 export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectStore {
   const chapters: EditorChapter[] = wizard.chapters.map((ch, chIndex) => {
     const chapNum = chIndex + 1; // Always use sequential number
@@ -140,4 +96,50 @@ export function createInitialProjectFromWizard(wizard: WizardFormData): ProjectS
     abstract_paragraphs: wizard.customFormat.has_abstract ? ["", "", "", "", "", ""] : undefined,
     lastUpdated: new Date().toISOString(),
   };
+}
+
+export interface AppStore extends ProjectStore {
+  setWizard: (data: Partial<WizardFormData>) => void;
+  setChapters: (chapters: EditorChapter[]) => void;
+  setProject: (data: ProjectStore) => void;
+  clearProject: () => void;
+  createInitialProjectFromWizard: (wizard: WizardFormData) => ProjectStore;
+}
+
+const defaultStoreData: ProjectStore = {
+  wizard: DefaultProject,
+  chapters: [],
+  abstract_paragraphs: undefined,
+  lastUpdated: new Date().toISOString(),
+};
+
+export const useStore = create<AppStore>()(
+  persist(
+    (set) => ({
+      ...defaultStoreData,
+      setWizard: (data) => set((state) => ({ wizard: { ...state.wizard, ...data } })),
+      setChapters: (chapters) => set({ chapters }),
+      setProject: (data) => set({ ...data }),
+      clearProject: () => set({ ...defaultStoreData }),
+      createInitialProjectFromWizard: createInitialProjectFromWizard,
+    }),
+    {
+      name: STORAGE_KEY,
+    }
+  )
+);
+
+// Fallback legacy functions pointing to Zustand for backward compatibility without breaking components instantly
+export function saveProject(data: ProjectStore) {
+  useStore.getState().setProject(data);
+}
+
+export function getProject(): ProjectStore | null {
+  const state = useStore.getState();
+  if (!state.chapters.length) return null;
+  return state;
+}
+
+export function clearProject() {
+  useStore.getState().clearProject();
 }
