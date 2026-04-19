@@ -23,6 +23,16 @@ export const DefaultProject: WizardFormData = {
     year: new Date().getFullYear().toString(),
   },
   format: "standar-a",
+  customFormat: {
+    font_name: "Times New Roman",
+    font_size_body: 12,
+    font_size_heading: 14,
+    line_spacing: 1.5,
+    margin_top: 4.0,
+    margin_bottom: 3.0,
+    margin_left: 4.0,
+    margin_right: 3.0,
+  },
 };
 
 // State specifically for the Editor which has sections and content
