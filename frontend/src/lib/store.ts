@@ -1,6 +1,6 @@
 "use client";
 
-import { WizardFormData, DEFAULT_CUSTOM_FORMAT } from "@/app/wizard/page";
+import { WizardFormData, DEFAULT_CUSTOM_FORMAT } from "@/lib/format-types";
 
 const STORAGE_KEY = "makeit_current_project";
 

@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CustomFormatConfig, DEFAULT_CUSTOM_FORMAT } from "@/app/wizard/page";
+import { CustomFormatConfig, DEFAULT_CUSTOM_FORMAT } from "@/lib/format-types";
 
 // ── Preset Definitions ──────────────────────────────────
 
