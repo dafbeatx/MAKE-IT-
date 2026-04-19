@@ -42,8 +42,11 @@ const DEFAULT_FORM: WizardFormData = {
     nim: "",
     institution: "",
     faculty: "",
+    prodi: "",
     supervisor: "",
     year: new Date().getFullYear().toString(),
+    year_hijri: "",
+    degree_purpose: "Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan",
     logo: "",
   },
   format: "standar-a",
@@ -69,7 +72,7 @@ export default function WizardPage() {
           newState.hasCover = false;
           newState.chapters = [];
           newState.identity = {
-            title: "", docSubtype: "", name: "", nim: "", institution: "", faculty: "", supervisor: "", year: "", logo: ""
+            title: "", docSubtype: "", name: "", nim: "", institution: "", faculty: "", prodi: "", supervisor: "", year: "", year_hijri: "", degree_purpose: "Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan", logo: ""
           };
           newState.format = "custom"; // Force strictly manual format
         } else if (key === "docType" && value !== "skripsi" && prev.docType === "skripsi") {

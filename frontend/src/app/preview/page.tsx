@@ -166,34 +166,57 @@ export default function PreviewPage() {
               className="doc-preview origin-top overflow-hidden bg-white text-black shadow-xl"
               style={pageStyle()}
             >
-              <div className="flex h-full flex-col items-center justify-between py-12 text-center" style={{ fontFamily: fmt.font_name }}>
-                <div>
+              <div className="flex h-full flex-col items-center justify-between py-[1.5cm] text-center" style={{ fontFamily: fmt.font_name, paddingLeft: `${fmt.margin_left}cm`, paddingRight: `${fmt.margin_right}cm` }}>
+                
+                {/* TOP SECTION: Logo + Title + Subtype + Purpose */}
+                <div className="flex flex-col items-center w-full">
                   {project.wizard.identity.logo && (
-                    <img src={project.wizard.identity.logo} alt="Logo" className="mx-auto mb-10 h-32 w-32 object-contain" />
+                    <img src={project.wizard.identity.logo} alt="Logo" className="mx-auto mb-8 h-28 w-28 object-contain" />
                   )}
-                  <p className="mb-8 font-bold uppercase leading-tight" style={{ fontSize: h1FontSize }}>
-                    {project.wizard.identity.title || "JUDUL DOKUMEN BELUM DIISI"}
+                  
+                  <p className="mb-6 font-bold uppercase leading-tight" style={{ fontSize: h1FontSize }}>
+                    {project.wizard.identity.title || "JUDUL SKRIPSI BELUM DIISI"}
                   </p>
-                  <p className="font-bold uppercase tracking-wider" style={{ fontSize: h2FontSize }}>
+                  
+                  <p className="mb-4 font-bold uppercase tracking-widest" style={{ fontSize: h2FontSize }}>
                     {project.wizard.identity.docSubtype || "SKRIPSI"}
                   </p>
-                </div>
 
-                <div className="flex flex-col items-center pb-8 border-b-2 border-transparent">
-                  <p className="mb-2 uppercase" style={{ fontSize: bodyFontSize }}>Disusun Oleh:</p>
-                  <p className="mb-1 font-bold uppercase" style={{ fontSize: h2FontSize }}>
-                    {project.wizard.identity.name || "NAMA MAHASISWA"}
-                  </p>
-                  <p className="font-bold uppercase" style={{ fontSize: h2FontSize }}>
-                    NIM: {project.wizard.identity.nim || "-"}
+                  <p className="mx-auto max-w-[85%] leading-relaxed italic opacity-80" style={{ fontSize: bodyFontSize }}>
+                    {project.wizard.identity.degree_purpose || "Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan"}
                   </p>
                 </div>
 
-                <div className="flex flex-col items-center mt-auto font-bold uppercase leading-relaxed" style={{ fontSize: h2FontSize }}>
-                  <p>{project.wizard.identity.institution || "INSTITUSI"}</p>
-                  <p>{project.wizard.identity.faculty || "FAKULTAS"}</p>
-                  <p>{project.wizard.identity.year || new Date().getFullYear().toString()}</p>
+                {/* MIDDLE SECTION: Logo Again (as requested) */}
+                <div className="flex flex-col items-center">
+                   {project.wizard.identity.logo && (
+                    <img src={project.wizard.identity.logo} alt="Logo Center" className="mx-auto h-32 w-32 object-contain" />
+                  )}
                 </div>
+
+                {/* BOTTOM SECTION: Identity + Institution + Year */}
+                <div className="flex flex-col items-center w-full">
+                  <p className="mb-4" style={{ fontSize: bodyFontSize }}>Disusun Oleh:</p>
+                  
+                  <div className="mb-8 flex flex-col items-center">
+                    <p className="font-bold uppercase" style={{ fontSize: h2FontSize }}>
+                      {project.wizard.identity.name || "NAMA MAHASISWA"}
+                    </p>
+                    <p className="font-bold" style={{ fontSize: bodyFontSize }}>
+                      NIM: {project.wizard.identity.nim || "-"}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col items-center font-bold uppercase leading-snug" style={{ fontSize: h2FontSize }}>
+                    <p>PROGRAM STUDI {project.wizard.identity.prodi || "NAMA PRODI"}</p>
+                    <p>FAKULTAS {project.wizard.identity.faculty || "NAMA FAKULTAS"}</p>
+                    <p>{project.wizard.identity.institution || "INSTITUT UMMUL QURO AL-ISLAMI BOGOR"}</p>
+                    <p className="mt-2 normal-case font-bold">
+                      {project.wizard.identity.year || "2026"} / {project.wizard.identity.year_hijri || "1447 H"}
+                    </p>
+                  </div>
+                </div>
+
               </div>
             </div>
           )}

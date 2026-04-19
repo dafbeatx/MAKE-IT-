@@ -57,8 +57,11 @@ export interface WizardFormData {
     nim: string;
     institution: string;
     faculty: string;
+    prodi?: string;
     supervisor: string;
     year: string;
+    year_hijri?: string;
+    degree_purpose?: string;
     logo?: string;
   };
   format: string;

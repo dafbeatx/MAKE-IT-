@@ -10,8 +10,11 @@ interface IdentityData {
   nim: string;
   institution: string;
   faculty: string;
+  prodi?: string;
   supervisor: string;
   year: string;
+  year_hijri?: string;
+  degree_purpose?: string;
   logo?: string;
 }
 
@@ -133,31 +136,83 @@ export default function Step3Identitas({ value, onChange, hasCover }: Props) {
 
         <div className="space-y-2">
           <Label htmlFor="w-inst" className="text-sm font-semibold">
-            Institusi / Universitas
+            Nama Institusi / Universitas
           </Label>
           <Input
             id="w-inst"
             value={value.institution}
             onChange={(e) => update("institution", e.target.value)}
-            placeholder="Contoh: Universitas Indonesia"
-            className="h-12 text-base sm:h-11 sm:text-sm"
+            placeholder="Contoh: Institut Ummul Quro Al-Islami Bogor"
+            className="h-12 text-base sm:h-11 sm:text-sm uppercase"
           />
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="w-fak" className="text-sm font-semibold">
-            Fakultas / Program Studi
+            Fakultas
           </Label>
           <Input
             id="w-fak"
             value={value.faculty}
             onChange={(e) => update("faculty", e.target.value)}
-            placeholder="Contoh: Teknik Informatika"
+            placeholder="Contoh: Fakultas Tarbiyah dan Ilmu Keguruan"
+            className="h-12 text-base sm:h-11 sm:text-sm uppercase"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="w-prodi" className="text-sm font-semibold">
+            Program Studi / Prodi
+          </Label>
+          <Input
+            id="w-prodi"
+            value={value.prodi || ""}
+            onChange={(e) => update("prodi", e.target.value)}
+            placeholder="Contoh: Pendidikan Guru Madrasah Ibtidaiyah"
+            className="h-12 text-base sm:h-11 sm:text-sm uppercase"
+          />
+        </div>
+
+        <div className="space-y-2 sm:col-span-2">
+          <Label htmlFor="w-degree" className="text-sm font-semibold">
+            Teks Gelar / Syarat Penulisan
+          </Label>
+          <Input
+            id="w-degree"
+            value={value.degree_purpose || ""}
+            onChange={(e) => update("degree_purpose", e.target.value)}
+            placeholder="Contoh: Diajukan Untuk Memenuhi Syarat Memperoleh Gelar Sarjana Pendidikan"
             className="h-12 text-base sm:h-11 sm:text-sm"
           />
         </div>
 
         <div className="space-y-2">
+          <Label htmlFor="w-year" className="text-sm font-semibold">
+            Tahun Masehi
+          </Label>
+          <Input
+            id="w-year"
+            value={value.year}
+            onChange={(e) => update("year", e.target.value)}
+            placeholder="2026"
+            className="h-12 text-base sm:h-11 sm:text-sm"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="w-hijri" className="text-sm font-semibold">
+            Tahun Hijriah
+          </Label>
+          <Input
+            id="w-hijri"
+            value={value.year_hijri || ""}
+            onChange={(e) => update("year_hijri", e.target.value)}
+            placeholder="1447 H"
+            className="h-12 text-base sm:h-11 sm:text-sm"
+          />
+        </div>
+
+        <div className="space-y-2 sm:col-span-2">
           <Label htmlFor="w-dosen" className="text-sm font-semibold">
             Dosen Pembimbing
           </Label>
@@ -166,19 +221,6 @@ export default function Step3Identitas({ value, onChange, hasCover }: Props) {
             value={value.supervisor}
             onChange={(e) => update("supervisor", e.target.value)}
             placeholder="Nama pembimbing"
-            className="h-12 text-base sm:h-11 sm:text-sm"
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="w-year" className="text-sm font-semibold">
-            Tahun
-          </Label>
-          <Input
-            id="w-year"
-            value={value.year}
-            onChange={(e) => update("year", e.target.value)}
-            placeholder="2024"
             className="h-12 text-base sm:h-11 sm:text-sm"
           />
         </div>
