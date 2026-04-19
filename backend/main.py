@@ -55,6 +55,7 @@ class Identity(BaseModel):
     year_hijri: Optional[str] = None
     degree_purpose: Optional[str] = None
     logo: Optional[str] = None
+    address: Optional[str] = None
 
 class FormatConfig(BaseModel):
     font_name: str = "Times New Roman"
@@ -193,22 +194,22 @@ def build_document(req: GenerateRequest) -> Document:
             _add_centered_line(
                 req.identity.degree_purpose,
                 fmt.font_size_body,
-                italic=False,
+                italic=True,
             )
 
         for _ in range(3):
             doc.add_paragraph("")
 
-        # 4. Middle Logo (large, centered)
-        _add_logo(2.2)
+        # 4. Middle Logo (single, large, centered)
+        _add_logo(1.8)
 
-        for _ in range(2):
+        for _ in range(3):
             doc.add_paragraph("")
 
-        # 6. "Disusun Oleh:"
+        # 5. "Disusun Oleh:"
         _add_centered_line("Disusun Oleh:", fmt.font_size_body)
 
-        # 7. Name & NIM
+        # 6. Name & NIM
         if req.identity.name:
             _add_centered_line(req.identity.name.upper(), fmt.font_size_body, bold=True)
 
@@ -218,7 +219,7 @@ def build_document(req: GenerateRequest) -> Document:
         for _ in range(2):
             doc.add_paragraph("")
 
-        # 8. Institution block (Prodi → Fakultas → Institusi)
+        # 7. Institution block (Prodi → Fakultas → Institusi)
         institution_lines: list[str] = []
         if req.identity.prodi:
             institution_lines.append(f"PROGRAM STUDI {req.identity.prodi.upper()}")
@@ -229,6 +230,10 @@ def build_document(req: GenerateRequest) -> Document:
 
         for text in institution_lines:
             _add_centered_line(text, fmt.font_size_body, bold=True)
+
+        # 8. Address
+        if req.identity.address:
+            _add_centered_line(req.identity.address.upper(), fmt.font_size_body, bold=True)
 
         # 9. Years (Masehi / Hijriah)
         year_parts = [p for p in [req.identity.year, req.identity.year_hijri] if p]

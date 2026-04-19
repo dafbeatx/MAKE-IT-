@@ -63,6 +63,7 @@ export interface WizardFormData {
     year_hijri?: string;
     degree_purpose?: string;
     logo?: string;
+    address?: string;
   };
   format: string;
   customFormat: CustomFormatConfig;

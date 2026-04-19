@@ -184,18 +184,18 @@ export default function PreviewPage() {
               style={coverPageStyle()}
             >
               <div
-                className="flex flex-col items-center justify-between text-center pb-8 pt-2"
+                className="flex flex-col items-center justify-between text-center"
                 style={{
                   fontFamily: `'${fmt.font_name}', Times, serif`,
                   minHeight: `calc(${(297 / 25.4) * 96}px - ${Math.round(fmt.margin_top * 37.8)}px - ${Math.round(fmt.margin_bottom * 37.8)}px)`,
                 }}
               >
-                {/* ── TOP SECTION: Judul + SubType + Degree Purpose ── */}
-                <div className="flex w-full flex-col items-center">
-                  {/* Judul Skripsi — dari data Step 3 */}
+                {/* ── TOP SECTION: Judul → Subtype → Degree Purpose ── */}
+                <div className="flex w-full flex-col items-center pt-4">
+                  {/* 1. Judul Skripsi */}
                   {identity.title && (
                     <p
-                      className="mb-6 leading-snug px-6"
+                      className="mb-4 px-4 leading-snug"
                       style={{
                         fontSize: h1FontSize,
                         fontWeight: fmt.h1_bold ? "bold" : "normal",
@@ -206,10 +206,10 @@ export default function PreviewPage() {
                     </p>
                   )}
 
-                  {/* Jenis Dokumen (SKRIPSI / SEMINAR HASIL / dll) */}
-                  {(identity.docSubtype) && (
+                  {/* 2. Jenis Dokumen (SKRIPSI / SEMINAR HASIL / dll) */}
+                  {identity.docSubtype && (
                     <p
-                      className="mb-6 tracking-widest"
+                      className="mb-4 tracking-[0.2em]"
                       style={{
                         fontSize: h2FontSize,
                         fontWeight: fmt.h2_bold ? "bold" : "normal",
@@ -220,10 +220,10 @@ export default function PreviewPage() {
                     </p>
                   )}
 
-                  {/* Teks Tujuan Gelar */}
+                  {/* 3. Teks Tujuan Gelar */}
                   {identity.degree_purpose && (
                     <p
-                      className="mx-auto max-w-[80%] leading-relaxed"
+                      className="mx-auto max-w-[80%] leading-relaxed italic"
                       style={{ fontSize: bodyFontSize }}
                     >
                       {identity.degree_purpose}
@@ -231,61 +231,66 @@ export default function PreviewPage() {
                   )}
                 </div>
 
-                {/* ── MIDDLE SECTION: Logo Kedua (Center Page) ── */}
-                <div className="flex flex-col items-center py-6">
+                {/* ── MIDDLE SECTION: Logo (satu-satunya, center page) ── */}
+                <div className="flex flex-col items-center py-4">
                   {identity.logo && (
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img
                       src={identity.logo}
-                      alt="Logo Institusi Center"
+                      alt="Logo Institusi"
                       className="mx-auto object-contain"
-                      style={{ height: "180px", width: "180px" }}
+                      style={{ height: "140px", width: "140px" }}
                     />
                   )}
                 </div>
 
-                {/* ── BOTTOM SECTION: Disusun Oleh + Nama + NIM + Institusi + Tahun ── */}
-                <div className="flex w-full flex-col items-center">
-                  <p className="mb-3" style={{ fontSize: bodyFontSize }}>
+                {/* ── BOTTOM SECTION: Disusun Oleh → Nama → NIM → Institusi → Alamat → Tahun ── */}
+                <div className="flex w-full flex-col items-center pb-2">
+                  {/* 5. Disusun Oleh: */}
+                  <p className="mb-2" style={{ fontSize: bodyFontSize }}>
                     Disusun Oleh:
                   </p>
 
-                  {/* Nama & NIM */}
-                  <div className="mb-6 flex flex-col items-center">
-                    {identity.name && (
-                      <p className="font-bold uppercase" style={{ fontSize: h2FontSize }}>
-                        {identity.name}
-                      </p>
-                    )}
-                    {identity.nim && (
-                      <p className="font-bold" style={{ fontSize: bodyFontSize }}>
-                        NIM: {identity.nim}
-                      </p>
-                    )}
-                  </div>
+                  {/* 6. Nama */}
+                  {identity.name && (
+                    <p
+                      className="font-bold uppercase"
+                      style={{ fontSize: bodyFontSize }}
+                    >
+                      {identity.name}
+                    </p>
+                  )}
 
-                  {/* Prodi + Fakultas + Institusi */}
+                  {/* 7. NIM */}
+                  {identity.nim && (
+                    <p className="mb-4 font-bold" style={{ fontSize: bodyFontSize }}>
+                      NIM: {identity.nim}
+                    </p>
+                  )}
+
+                  {/* 8. Prodi + Fakultas + Institusi */}
                   <div
                     className="flex flex-col items-center font-bold uppercase leading-relaxed"
                     style={{ fontSize: bodyFontSize }}
                   >
-                    {identity.prodi && (
-                      <p>PROGRAM STUDI {identity.prodi}</p>
-                    )}
-                    {identity.faculty && (
-                      <p>FAKULTAS {identity.faculty}</p>
-                    )}
-                    {identity.institution && (
-                      <p>{identity.institution}</p>
-                    )}
+                    {identity.prodi && <p>PROGRAM STUDI {identity.prodi}</p>}
+                    {identity.faculty && <p>FAKULTAS {identity.faculty}</p>}
+                    {identity.institution && <p>{identity.institution}</p>}
                   </div>
 
-                  {/* Tahun Masehi / Hijriah */}
-                  {(identity.year || identity.year_hijri) && (
+                  {/* 9. Alamat Kampus */}
+                  {identity.address && (
                     <p
-                      className="mt-3 font-bold"
+                      className="mt-1 font-bold uppercase"
                       style={{ fontSize: bodyFontSize }}
                     >
+                      {identity.address}
+                    </p>
+                  )}
+
+                  {/* 10. Tahun Masehi / Hijriah */}
+                  {(identity.year || identity.year_hijri) && (
+                    <p className="mt-2 font-bold" style={{ fontSize: bodyFontSize }}>
                       {[identity.year, identity.year_hijri].filter(Boolean).join(" / ")}
                     </p>
                   )}

@@ -16,6 +16,7 @@ interface IdentityData {
   year_hijri?: string;
   degree_purpose?: string;
   logo?: string;
+  address?: string;
 }
 
 interface Props {
@@ -186,6 +187,21 @@ export default function Step3Identitas({ value, onChange, hasCover }: Props) {
             className="h-12 text-base sm:h-11 sm:text-sm"
           />
         </div>
+
+        {hasCover && (
+          <div className="space-y-2 sm:col-span-2">
+            <Label htmlFor="w-address" className="text-sm font-semibold">
+              Alamat Kampus
+            </Label>
+            <Input
+              id="w-address"
+              value={value.address || ""}
+              onChange={(e) => update("address", e.target.value)}
+              placeholder="Contoh: Jl. Leuwiliang No. 1, Bogor"
+              className="h-12 text-base sm:h-11 sm:text-sm"
+            />
+          </div>
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="w-year" className="text-sm font-semibold">
